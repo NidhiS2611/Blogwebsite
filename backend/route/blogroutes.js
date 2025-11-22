@@ -1,0 +1,10 @@
+const express = require('express');
+const router = express.Router();
+const { createblog,toggleLike,getblog,getSingleBlog } = require('../controller/blogcontroller');
+const upload = require('../config/multer'); 
+const authmiddle = require('../middleware/authmiddle');
+router.post('/create', authmiddle, upload.single('media'), createblog);
+router.post('/like/:id', authmiddle, toggleLike);
+router.get('/blog/:id',authmiddle, getSingleBlog);
+router.get('/view/:id', getblog);
+module.exports = router;
