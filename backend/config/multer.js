@@ -2,7 +2,7 @@ const crypto = require('crypto')
 const multer = require('multer')
 const path = require('path')
 const storage = multer.diskStorage({
-    destination:function(req,res,cb){
+    destination:function(req,file,cb){
 cb(null,'public/uploads')
     },
 filename:function(req,file,cb){
@@ -14,3 +14,4 @@ cb(null,crypto.randomBytes(20).toString('hex')+Date.now() +path.extname(file.ori
  })
 
  module.exports = upload
+ 

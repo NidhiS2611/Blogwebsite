@@ -3,6 +3,7 @@ const usermodel = require('../models/usermodel');
 const bcrypt = require('bcryptjs');
 const { generatetoken } = require('../utils/generatetoken');
 const { z } = require('zod');
+const blog = require('../models/blogmodel');
 
 
 const userschema = z.object({
@@ -93,7 +94,8 @@ const login = async (req, res) => {
       httpOnly: true,
       maxAge: 30 * 24 * 60 * 60 * 1000,
       secure: false,
-      sameSite: 'None',
+      sameSite: 'lax',
+      
     })
 
     
@@ -158,4 +160,56 @@ const followUnfollowUser = async (req, res) => {
 
 
 
-module.exports = { register, login, followUnfollowUser   };
+getUserProfile = async (req, res) => {
+  try {
+    const userid = req.params.id || req.params._id;
+
+    // 🔹 User basic info + followers + following
+    const user = await usermodel.findById(userid)
+      .select("name bio profilepicture followers following Blog created_at")
+      .populate("followers", "name")
+      .populate("following", "name");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    // 🔹 User blogs (detail)
+    const blogs = await blog.find({ author: userid })
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+
+      profile: {
+        _id: user._id,
+        name: user.name,
+        bio: user.bio,
+
+        followersCount: user.followers.length,
+        followingCount: user.following.length,
+
+        followers: user.followers,
+        following: user.following,
+
+        articlesCount: blogs.length,
+        articles: blogs,
+
+        joinedAt: user.created_at
+      }
+    });
+
+  } catch (error) {
+    console.error("PROFILE ERROR:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error"
+    });
+  }
+};
+
+
+module.exports = { register, login, followUnfollowUser  ,getUserProfile};

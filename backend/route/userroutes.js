@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { register,login,followUnfollowUser} = require('../controller/usercontroller');
+const { register,login,followUnfollowUser,getUserProfile} = require('../controller/usercontroller');
 const authmiddle = require('../middleware/authmiddle');
 const usermodel = require('../models/usermodel');
 
@@ -25,5 +25,5 @@ router.get('/me', authmiddle, async (req, res) => {
     
   }
 });
-
+router.get('/profile/:id',getUserProfile )
 module.exports = router;

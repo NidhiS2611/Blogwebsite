@@ -1,6 +1,7 @@
 const blogmodel = require('../models/blogmodel');
 const usermodel = require('../models/usermodel');
 const mongoose = require('mongoose');
+const model = require('../services/aiservices')
 
 const createblog = async (req, res) => {
   // Ensure user is authenticated
@@ -172,16 +173,142 @@ const getSingleBlog = async (req, res) => {
     });
   }
 };
- const getblog =  async (req, res) => {
-    try {
-        const blog = await blogmodel.findById(req.params.id)
-        res.status(200).json(blog)
-    } catch (error) {   
+const getTopBlogs = async (req, res) => {
+  try {
+    const blogs = await blogmodel.find()
+      .limit(5)
+      .populate("author", "name") // only author name
+      .lean();
 
-        res.status(500).json({ error: error.message })
-        console.log(error);
-        
-    } 
+    const formatted = blogs.map((b, index) => ({
+      id: b._id,
+      title: b.title,
+      excerpt: b.excerpt,
+      category: b.category,
+          media: b.media
+        ? `http://localhost:3000/uploads/${b.media}`
+        : "https://via.placeholder.com/400x200?text=Blog",
+      author: b.author?.name || "Unknown",
+      date: new Date(b.createdAt).toLocaleDateString("en-US", {
+         day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }),
+    
+    }));
+
+    res.json({ success: true, blogs: formatted });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Failed to fetch blogs" });
   }
+};
+const updateBlog = async (req, res) => {
+  try {
+    const blogId = req.params.id;
+    const userId = req.user.id;
 
-module.exports = { createblog, toggleLike, getSingleBlog , getblog};
+    // Blog exist check
+    const blog = await blogmodel.findById(blogId);
+    if (!blog) return res.status(404).json({ msg: "Blog not found" });
+
+    // Owner check
+    if (blog.author.toString() !== userId)
+      return res.status(403).json({ msg: "Not authorized" });
+
+    // Update object
+    let updateData = {
+      title: req.body.title,
+      content: req.body.content,
+      excerpt: req.body.excerpt,
+      category: req.body.category,
+    };
+
+    // ✔ If image uploaded => update it
+    if (req.file) {
+      updateData.media = req.file.filename;
+    }
+
+    // Final update
+    const updatedBlog = await blogmodel.findByIdAndUpdate(
+      blogId,
+      { $set: updateData },
+      { new: true }
+    );
+
+    res.json({ msg: "Blog updated successfully", blog: updatedBlog });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ msg: "Server error" });
+  }
+};
+
+
+const generateBlogwithai = async (req, res) => {
+  try {
+    const { aiprompt } = req.body;
+
+    const prompt = `
+You are a professional blog writer.
+
+Write a high-quality, engaging blog article about:
+
+"${aiprompt}"
+
+Rules:
+- Length must be between 100 and 200 words
+- Use simple, clear English
+- Add a short introduction
+- Use small paragraphs
+- Add 1–2 subheadings
+- Make it suitable for a blog website
+- Do not add emojis
+- Do not mention AI or Gemini
+`;
+
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+
+    res.json({
+      success: true,
+      content: text,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ success: false, message: "AI failed" });
+  }
+}
+const getallBlogs = async (req, res) => {
+  try {
+    const blogs = await blogmodel.find()
+      
+      .populate("author", "name") // only author name
+      
+
+    const formatted = blogs.map((b, index) => ({
+      id: b.id,
+      title: b.title,
+      excerpt: b.excerpt,
+      category: b.category,
+          media: b.media
+        ? `http://localhost:3000/uploads/${b.media}`
+        : "https://via.placeholder.com/400x200?text=Blog",
+      author: b.author?.name || "Unknown",
+      date: new Date(b.createdAt).toLocaleDateString("en-US", {
+         day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }),
+    
+    }));
+
+    res.json({ success: true, blogs: formatted });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Failed to fetch blogs" });
+  }
+};
+
+
+module.exports = { createblog, toggleLike, getSingleBlog , getTopBlogs, updateBlog, generateBlogwithai, getallBlogs   };

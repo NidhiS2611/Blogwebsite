@@ -1,87 +1,92 @@
-import { Clock, User } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Clock, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-export default function PostCard({ posts }) {
+export default function PostCard({
+  id,
+  title,
+  excerpt,
+  category,
+  image,
+  author,
+  date,
+  readTime,
+}) {
   const navigate = useNavigate();
+  console.log("PostCard ID:", id);
+  
+  
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {posts.length === 0 ? (
-        <p className="col-span-full text-center text-gray-500 text-lg">
-          No blog posts available.
+    <div
+      className="group bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition cursor-pointer 
+      flex flex-col h-[520px]" 
+      onClick={() => navigate(`/blog/${id}`)}
+    >
+      {/* FIXED IMAGE HEIGHT */}
+      <div className="relative w-full h-56 overflow-hidden bg-gray-200 flex-shrink-0">
+        <img
+          src={image}
+          alt={title}
+          className="w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-110"
+        />
+
+        <div className="absolute top-3 right-3">
+          <span className="inline-block bg-gradient-to-r from-purple-500 to-blue-500 text-white 
+          px-3 py-1 rounded-full text-xs font-semibold shadow">
+            {category}
+          </span>
+        </div>
+      </div>
+
+      {/* CONTENT FIXED HEIGHT */}
+      <div className="p-5 flex flex-col flex-grow">
+
+        {/* Title (force 2 lines) */}
+        <h3 className="font-bold text-lg text-gray-900 leading-snug 
+        group-hover:text-purple-600 line-clamp-2 h-[48px]">
+          {title}
+        </h3>
+
+        {/* Excerpt (force 2 lines) */}
+        <p className="text-gray-600 text-sm line-clamp-2 mt-2 h-[40px]">
+          {excerpt}
         </p>
-      ) : (
-        posts.map((post) => (
-          <div
-            key={post.id}
-            className="group bg-white rounded-xl overflow-hidden card-glow cursor-pointer"
-            onClick={() => navigate(`/blog/${post.id}`)}
-          >
-            {/* Image Container */}
-            <div className="relative h-48 overflow-hidden bg-gray-200">
-              <img
-                src={post.image}
-                alt={post.title}
-                className="w-full h-full object-cover group-hover:scale-110 smooth-transition"
-              />
-              <div className="absolute top-4 right-4">
-                <span className="inline-block bg-gradient-to-r from-purple-500 to-blue-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                  {post.category}
-                </span>
-              </div>
-            </div>
 
-            {/* Content */}
-            <div className="p-6">
-              {/* Icon and Title */}
-              <div className="flex items-start gap-3 mb-3">
-                <span className="text-3xl">{post.icon}</span>
-                <div className="flex-1">
-                  <h3 className="font-bold text-lg text-gray-900 group-hover:text-purple-600 smooth-transition line-clamp-2">
-                    {post.title}
-                  </h3>
-                </div>
-              </div>
+        {/* FIXED DIVIDER POSITION */}
+        <hr className="my-4 border-gray-200" />
 
-              {/* Excerpt */}
-              <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                {post.excerpt}
-              </p>
+        {/* META FIXED AREA */}
+        <div className="flex items-center justify-between text-xs text-gray-500">
+          <span className="flex items-center gap-1">
+            <User className="w-4 h-4" /> {author}
+          </span>
 
-              {/* Divider */}
-              <div className="border-t border-gray-100 my-4" />
+          <span className="flex items-center gap-1">
+            <Clock className="w-4 h-4" /> {readTime}
+          </span>
+        </div>
 
-              {/* Meta Information */}
-              <div className="flex items-center justify-between text-xs text-gray-500">
-                <div className="flex items-center gap-2">
-                  <User className="w-4 h-4" />
-                  <span>{post.author}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
-                  <span>{post.readTime}</span>
-                </div>
-              </div>
+        <p className="text-gray-400 text-xs mt-1">{date}</p>
 
-              {/* Date */}
-              <p className="text-gray-400 text-xs mt-2">{post.date}</p>
-
-              {/* Read More Button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(`/blog/${post.id}`);
-                }}
-                className="mt-4 w-full py-2 bg-gradient-to-r from-purple-50 to-blue-50 text-purple-600 rounded-lg font-semibold hover:from-purple-100 hover:to-blue-100 smooth-transition"
-              >
-                Read More →
-              </button>
-            </div>
-          </div>
-        ))
-      )}
+        {/* BUTTON ALWAYS AT BOTTOM */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/blog/${id}`);
+          }}
+          className="mt-auto w-full py-2 bg-gradient-to-r from-purple-50 to-blue-50 text-purple-600 
+          rounded-lg font-semibold hover:from-purple-100 hover:to-blue-100 transition"
+        >
+          Read More →
+        </button>
+      </div>
     </div>
   );
 }
+
+
+
+
+
 
 

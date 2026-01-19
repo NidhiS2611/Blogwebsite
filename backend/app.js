@@ -1,17 +1,21 @@
 const express = require('express');
 const app = express();
+const path = require('path');
 
 require('dotenv').config();
 const connectDB = require('./config/mongooseconnect');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 app.use(cors({
-    origin: 'http://localhost:5173',
+    origin: ['http://localhost:5173', "https://stateless-carey-nonpestilently.ngrok-free.dev"],
     credentials: true,
 }));
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
+
+
 
 const userRoutes = require('./route/userroutes');
 const blogRoutes = require('./route/blogroutes');
