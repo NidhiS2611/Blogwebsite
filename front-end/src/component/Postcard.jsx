@@ -1,88 +1,102 @@
-import { Clock, User } from "lucide-react";
+import React, { memo, useCallback } from "react";
+import { Share2, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-export default function PostCard({
+function PostCard({
   id,
   title,
-  excerpt,
-  category,
   image,
   author,
+  authorProfile,
   date,
-  readTime,
+  views,   // ✅ ADD THIS
 }) {
   const navigate = useNavigate();
-  console.log("PostCard ID:", id);
-  
-  
+
+  /* ================= OPEN BLOG ================= */
+  const goToBlog = useCallback(() => {
+    navigate(`/blog/${id}`);
+  }, [navigate, id]);
+
+  /* ================= SHARE ================= */
+  const shareOnWhatsApp = (e) => {
+    e.stopPropagation();
+    const url = `${window.location.origin}/blog/${id}`;
+    window.open(
+      `https://wa.me/?text=${encodeURIComponent(title + "\n" + url)}`
+    );
+  };
 
   return (
     <div
-      className="group bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition cursor-pointer 
-      flex flex-col h-[520px]" 
-      onClick={() => navigate(`/blog/${id}`)}
+      onClick={goToBlog}
+      className="
+        group cursor-pointer p-4 rounded-xl 
+        bg-neutral-900 border border-neutral-800 
+        hover:border-neutral-700 transition
+      "
     >
-      {/* FIXED IMAGE HEIGHT */}
-      <div className="relative w-full h-56 overflow-hidden bg-gray-200 flex-shrink-0">
-        <img
-          src={image}
-          alt={title}
-          className="w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-110"
-        />
+      {/* MOBILE LAYOUT */}
+      <div className="flex gap-3 md:block">
+        {/* IMAGE */}
+        {image && (
+          <img
+            src={image}
+            alt="blog"
+            className="w-24 h-24 md:w-full md:h-auto object-cover rounded-lg border border-neutral-800"
+          />
+        )}
 
-        <div className="absolute top-3 right-3">
-          <span className="inline-block bg-gradient-to-r from-purple-500 to-blue-500 text-white 
-          px-3 py-1 rounded-full text-xs font-semibold shadow">
-            {category}
-          </span>
+        {/* CONTENT */}
+        <div className="flex-1">
+          {/* AUTHOR */}
+          <div className="flex gap-3 items-center">
+            <img
+              src={authorProfile}
+              alt="author"
+              className="w-8 h-8 rounded-full border border-neutral-700"
+            />
+            <div>
+              <p className="text-sm font-semibold text-white">
+                {author || "Unknown"}
+              </p>
+              <p className="text-xs text-gray-400">{date}</p>
+            </div>
+          </div>
+
+          {/* TITLE */}
+          <p className="mt-2 text-gray-200 text-sm line-clamp-2">
+            {title}
+          </p>
+
+          {/* 👇 VIEWS ADDED HERE */}
+          <div className="flex items-center gap-1 mt-2 text-xs text-gray-400">
+            <Eye size={14} />
+            <span>{views || 0} views</span>
+          </div>
         </div>
       </div>
 
-      {/* CONTENT FIXED HEIGHT */}
-      <div className="p-5 flex flex-col flex-grow">
-
-        {/* Title (force 2 lines) */}
-        <h3 className="font-bold text-lg text-gray-900 leading-snug 
-        group-hover:text-purple-600 line-clamp-2 h-[48px]">
-          {title}
-        </h3>
-
-        {/* Excerpt (force 2 lines) */}
-        <p className="text-gray-600 text-sm line-clamp-2 mt-2 h-[40px]">
-          {excerpt}
-        </p>
-
-        {/* FIXED DIVIDER POSITION */}
-        <hr className="my-4 border-gray-200" />
-
-        {/* META FIXED AREA */}
-        <div className="flex items-center justify-between text-xs text-gray-500">
-          <span className="flex items-center gap-1">
-            <User className="w-4 h-4" /> {author}
-          </span>
-
-          <span className="flex items-center gap-1">
-            <Clock className="w-4 h-4" /> {readTime}
-          </span>
-        </div>
-
-        <p className="text-gray-400 text-xs mt-1">{date}</p>
-
-        {/* BUTTON ALWAYS AT BOTTOM */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`/blog/${id}`);
-          }}
-          className="mt-auto w-full py-2 bg-gradient-to-r from-purple-50 to-blue-50 text-purple-600 
-          rounded-lg font-semibold hover:from-purple-100 hover:to-blue-100 transition"
-        >
-          Read More →
+      {/* ACTIONS */}
+      <div className="flex justify-end mt-3 text-gray-400 text-sm">
+        <button onClick={shareOnWhatsApp} className="hover:text-white flex gap-1">
+          <Share2 size={16} />
+          Share
         </button>
       </div>
     </div>
   );
 }
+
+export default memo(PostCard);
+
+
+
+
+
+
+
+
 
 
 

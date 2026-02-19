@@ -19,7 +19,7 @@ next()
 
     catch(err){
         console.log(err);
-        return res.status(500).json({error:'internal server error'})
+        return res.status(401).json({error:'internal server error'})
         
     }
 }

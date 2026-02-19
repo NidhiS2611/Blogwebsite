@@ -1,38 +1,91 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Home from './pages/Home';
-import Signup from './pages/Signup';
-import { LampCeiling } from 'lucide-react';
-import Login from './pages/Login' 
- import Homelayout from './layout/Homelayout ';
- import Blogdetails from './pages/Blogdetails';// Ye tumhara home page hai
- import Createblog from './pages/Createblog';
- import Explore from './pages/Explore';
- import Profile from './pages/Profile'; 
+
+import { useEffect, Suspense, lazy } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
+import Notificationlistener from "./component/Notificationlisner.jsx";
+import Homelayout from "./layout/Homelayout ";
+import AuthLanding from "./pages/Authlandingpage.jsx";
+
+// 🔥 Lazy Pages
+const Home = lazy(() => import("./pages/Home"));
+const Signup = lazy(() => import("./pages/Signup"));
+const Login = lazy(() => import("./pages/Login"));
+const Blogdetails = lazy(() => import("./pages/Blogdetails"));
+const Createblog = lazy(() => import("./pages/Createblog"));
+const Explore = lazy(() => import("./pages/Explore"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Setting = lazy(() => import("./pages/Setting.jsx"));
+const Notificationsetting = lazy(() =>
+  import("./pages/Notificationsetting.jsx")
+);
+const Accountsetting = lazy(() =>
+  import("./pages/Accountsetting.jsx")
+);
+const Notificationpage = lazy(() =>
+  import("./pages/Notificationpage.jsx")
+);
 
 function App() {
+  useEffect(() => {
+    // 🔔 Notification permission
+    if ("Notification" in window) {
+      Notification.requestPermission().then((permission) => {
+        console.log("🔔 Notification Permission:", permission);
+      });
+    }
+
+    // 🟢 Service Worker
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("/firebase-messaging-sw.js")
+        .then((reg) => console.log("✅ SW Registered:", reg))
+        .catch((err) => console.error("❌ SW failed:", err));
+    }
+  }, []);
+
   return (
-    <>
-      <Router>
+    <Router>
+      <Notificationlistener />
+
+      {/* 🔥 Suspense WRAPPER */}
+      <Suspense
+        fallback={
+          <div className="min-h-screen flex items-center justify-center text-lg font-semibold">
+            Loading...
+          </div>
+        }
+      >
         <Routes>
-              <Route path="/signup" element={<Signup />} />
+          {/* Auth */}
+          <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
-          <Route element={<Homelayout />}>  
-
-          <Route path="/" element={<Home />} />
-          <Route path="blog/:id" element={<Blogdetails />} />
-          <Route path="createblog" element={<Createblog />} />
-          <Route path ="explore" element={< Explore/>}/>
-          <Route path ="profile/:userId" element={< Profile/>}/>
-
+          <Route path="/notifications" element={<Notificationpage />} />
+          <Route path="/" element={<AuthLanding />} />
           
+          {/* Layout */}
+          <Route element={<Homelayout />}>
+            <Route path="/home" element={<Home />} />
+          
+            <Route path="blog/:id" element={<Blogdetails />} />
+            <Route path="createblog" element={<Createblog />} />
+            <Route path="explore" element={<Explore />} />
+            <Route path="profile/:userId" element={<Profile />} />
+            <Route path="settings" element={<Setting />} />
+            <Route
+              path="settings/notifications"
+              element={<Notificationsetting />}
+            />
+            <Route
+              path="settings/account"
+              element={<Accountsetting />}
+            />
           </Route>
-          
         </Routes>
-      </Router>
-    </>
+      </Suspense>
+    </Router>
   );
 }
 
 export default App;
+
+
 

@@ -1,167 +1,268 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, LogOut } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import {
+  Home,
+  FileText,
+  Compass,
+  Bell,
+  PenLine,
+  Settings,
+  LogOut,
+  User,
+  Menu,
+  X,
+} from "lucide-react";
 import { useAuth } from "../context/Authcontext";
+import api from "../services/Axiosinstance";
 
 export default function Navbar() {
-  const [isOpen, setIsOpen] = useState(false);
-  const navigate = useNavigate();
+  const [profileOpen, setProfileOpen] = useState(false); // desktop dropdown
+  const [mobileProfileOpen, setMobileProfileOpen] = useState(false); // mobile dropdown
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  // 👉 Real Auth User
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const dropdownRef = useRef(null);
+  const mobileDropdownRef = useRef(null);
 
-  // 👉 If user exists, use that
-  const currentUser = user;
+  /* close dropdowns on outside click */
+  useEffect(() => {
+    const handler = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setProfileOpen(false);
+      }
+      if (
+        mobileDropdownRef.current &&
+        !mobileDropdownRef.current.contains(e.target)
+      ) {
+        setMobileProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
-  const navLinks = [
-    { label: "Home", href: "/" },
-    { label: "Blog", href: "/#blog" },
-    { label: "Categories", href: "/#categories" },
-  ];
+  /* unread notifications */
+  useEffect(() => {
+    if (!user) return;
+    api
+      .get("/notification/unread-count", { withCredentials: true })
+      .then((res) => setUnreadCount(res.data.count))
+      .catch(console.log);
+  }, [user]);
 
-  const handleLogout = () => {
-    logout();
-    setIsOpen(false);
-    navigate("/");
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
   };
 
   return (
-    <nav className="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-4 flex justify-between items-center h-16">
-        
-        {/* Logo */}
-        <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-lg">📚</span>
-          </div>
-          <span className="font-bold text-xl bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-            StudyHub
-          </span>
-        </Link>
+    <>
+      {/* ================= MOBILE TOP BAR ================= */}
+      <div className="md:hidden fixed top-0 left-0 w-full h-14 bg-black border-b border-neutral-800 flex items-center px-4 z-50">
+        <button onClick={() => setSidebarOpen(true)}>
+          <Menu className="text-white" />
+        </button>
 
-        {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center gap-6">
-          {navLinks.map((link) => (
-            <a
-              key={link.label}
-              href={link.href}
-              className="text-gray-700 hover:text-purple-600"
-            >
-              {link.label}
-            </a>
-          ))}
-        </div>
+        <span className="text-white font-semibold ml-3 mr-auto">
+          BlogSphere
+        </span>
 
-        {/* Desktop Auth Section */}
-        <div className="hidden md:flex items-center gap-4">
+        <div className="flex items-center gap-3 relative" ref={mobileDropdownRef}>
+          <button
+            onClick={() => navigate("/notifications")}
+            className="relative"
+          >
+            <Bell className="text-white" size={20} />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" />
+            )}
+          </button>
 
-          {currentUser ? (
-            <>
-              <Link to="/createblog" className="hover:text-purple-600">
-                ✍️ Create Blog
-              </Link>
+          {/* Profile photo -> dropdown open */}
+          <button onClick={() => setMobileProfileOpen((p) => !p)}>
+            <img
+              src={
+                user?.image ||
+                "https://cdn-icons-png.flaticon.com/512/149/149071.png"
+              }
+              className="w-8 h-8 rounded-full object-cover"
+              alt="profile"
+            />
+          </button>
 
-              {/* Profile */}
-              <Link to={`/profile/${currentUser._id}`} className="flex items-center gap-2 hover:opacity-80">
-
-                {/* Profile Image */}
-                <img
-                  src={
-                    currentUser.image
-                      ? currentUser.image                 // base64 from backend
-                      : "https://cdn-icons-png.flaticon.com/512/149/149071.png"
-                  }
-                  className="w-8 h-8 rounded-full border object-cover"
-                />
-
-                {/* Name */}
-                <span className="hidden lg:inline text-gray-700">
-                  {currentUser.name}
-                </span>
-              </Link>
-
-              {/* Logout */}
+          {/* Mobile dropdown */}
+          {mobileProfileOpen && (
+            <div className="absolute right-0 top-12 w-44 bg-neutral-900 border border-neutral-800 rounded-xl shadow-lg text-sm z-50">
               <button
-                onClick={handleLogout}
-                className="flex items-center gap-1 text-gray-700 hover:text-red-600"
+                onClick={() => {
+                  navigate(`/profile/${user?._id}`);
+                  setMobileProfileOpen(false);
+                }}
+                className="w-full px-4 py-2 flex gap-2 hover:bg-neutral-800 text-gray-300"
               >
-                <LogOut size={16} /> Logout
+                <User size={14} /> Profile
               </button>
-            </>
-          ) : (
-            <>
-              <Link to="/login" className="hover:text-purple-600">
-                Login
-              </Link>
 
-              <Link
-                to="/signup"
-                className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
+              <button
+                onClick={() => {
+                  navigate("/settings");
+                  setMobileProfileOpen(false);
+                }}
+                className="w-full px-4 py-2 flex gap-2 hover:bg-neutral-800 text-gray-300"
               >
-                Sign Up
-              </Link>
-            </>
+                <Settings size={14} /> Settings
+              </button>
+
+              <button
+                onClick={() => {
+                  handleLogout();
+                  setMobileProfileOpen(false);
+                }}
+                className="w-full px-4 py-2 flex gap-2 hover:bg-neutral-800 text-red-400"
+              >
+                <LogOut size={14} /> Logout
+              </button>
+            </div>
           )}
         </div>
-
-        {/* Mobile menu button */}
-        <button className="md:hidden" onClick={() => setIsOpen(!isOpen)}>
-          {isOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
       </div>
 
-      {/* Mobile Navigation */}
-      {isOpen && (
-        <div className="md:hidden px-4 pb-4 border-t border-gray-200 space-y-2">
-          {navLinks.map((link) => (
-            <a
-              key={link.label}
-              href={link.href}
-              onClick={() => setIsOpen(false)}
-              className="block py-2"
-            >
-              {link.label}
-            </a>
-          ))}
+      {/* ================= OVERLAY (MOBILE) ================= */}
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 bg-black/60 z-40 md:hidden"
+        />
+      )}
 
-          <hr className="border-gray-300" />
+      {/* ================= SIDEBAR ================= */}
+      <aside
+        className={`fixed top-0 left-0 h-screen w-64 bg-black border-r border-neutral-800 
+        flex flex-col justify-between z-50
+        transform transition-transform duration-300
+        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+        md:translate-x-0`}
+      >
+        {/* TOP */}
+        <div>
+          <div className="h-16 flex items-center justify-between px-6 text-white font-semibold text-lg border-b border-neutral-800">
+            BlogSphere
+            <button className="md:hidden" onClick={() => setSidebarOpen(false)}>
+              <X />
+            </button>
+          </div>
 
-          {currentUser ? (
-            <>
-              <Link to="/createblog" onClick={() => setIsOpen(false)} className="block py-2">
-                ✍️ Create Blog
-              </Link>
+          <nav className="px-4 py-4 space-y-2 text-sm">
+            <SidebarLink to="/home" icon={<Home size={18} />} label="Home" />
 
-              {/* Mobile Profile */}
-              <Link to={`/profile/${currentUser._id}`} className="block py-2" onClick={() => setIsOpen(false)}>
-                Profile
-              </Link>
+            {/* 👇 Notifications only on Desktop */}
+            <div className="hidden md:block">
+              <SidebarLink
+                to="/notifications"
+                icon={<Bell size={18} />}
+                label="Notifications"
+              />
+            </div>
+
+            <SidebarLink to="/explore" icon={<Compass size={18} />} label="Explore" />
+            <SidebarLink
+              to="/createblog"
+              icon={<PenLine size={18} />}
+              label="Write"
+              highlight
+            />
+          </nav>
+        </div>
+
+        {/* ================= BOTTOM PROFILE (DESKTOP) ================= */}
+        <div
+          className="relative px-4 py-4 border-t border-neutral-800 hidden md:block"
+          ref={dropdownRef}
+        >
+          <button
+            onClick={() => setProfileOpen(!profileOpen)}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-neutral-800"
+          >
+            <img
+              src={
+                user?.image ||
+                "https://cdn-icons-png.flaticon.com/512/149/149071.png"
+              }
+              className="w-9 h-9 rounded-full object-cover"
+              alt="profile"
+            />
+            <span className="text-gray-300 text-sm truncate">
+              {user?.name || "Profile"}
+            </span>
+          </button>
+
+          {profileOpen && (
+            <div className="absolute bottom-16 left-4 w-52 bg-neutral-900 border border-neutral-800 rounded-xl shadow-lg text-sm">
+              <button
+                onClick={() => navigate(`/profile/${user?._id}`)}
+                className="w-full px-4 py-2 flex gap-2 hover:bg-neutral-800 text-gray-300"
+              >
+                <User size={14} /> Profile
+              </button>
+
+              <button
+                onClick={() => navigate("/settings")}
+                className="w-full px-4 py-2 flex gap-2 hover:bg-neutral-800 text-gray-300"
+              >
+                <Settings size={14} /> Settings
+              </button>
 
               <button
                 onClick={handleLogout}
-                className="block py-2 text-left text-red-600"
+                className="w-full px-4 py-2 flex gap-2 hover:bg-neutral-800 text-red-400"
               >
-                Logout
+                <LogOut size={14} /> Logout
               </button>
-            </>
-          ) : (
-            <>
-              <Link to="/login" onClick={() => setIsOpen(false)} className="block py-2">
-                Login
-              </Link>
-
-              <Link
-                to="/signup"
-                onClick={() => setIsOpen(false)}
-                className="block py-2 bg-purple-600 text-white rounded-lg text-center"
-              >
-                Sign Up
-              </Link>
-            </>
+            </div>
           )}
         </div>
-      )}
-    </nav>
+      </aside>
+    </>
   );
 }
+
+/* ================= ACTIVE LINK ================= */
+function SidebarLink({ to, icon, label, highlight }) {
+  return (
+    <NavLink
+      to={to}
+      end={to === "/"}
+      className={({ isActive }) =>
+        `flex items-center gap-3 px-3 py-2 rounded-lg transition
+        ${
+          isActive
+            ? "bg-neutral-800 text-white font-medium"
+            : "text-gray-400 hover:bg-neutral-800"
+        }
+        ${highlight && !isActive ? "text-violet-400" : ""}`
+      }
+    >
+      {icon}
+      <span>{label}</span>
+    </NavLink>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+
+import { useEffect, useRef, useState } from "react";
 import PostCard from "../component/Postcard";
-import axios from "axios";
+import api from "../services/Axiosinstance";
 
 const categories = [
-    "All",
+  "All",
   "Study Tips",
   "Technology",
   "Career",
@@ -11,6 +12,7 @@ const categories = [
   "Research",
   "Creative",
 ];
+
 const BLOGS_PER_PAGE = 10;
 
 export default function Explore() {
@@ -18,14 +20,29 @@ export default function Explore() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [loading, setLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
-  // 🔹 Fetch all blogs once
-  const fetchBlogs = async () => {
+  const loaderRef = useRef(null);
+
+  // 🔹 Fetch blogs (pagination)
+  const fetchBlogs = async (pageNo = 1) => {
     try {
       setLoading(true);
-      const res = await axios.get("http://localhost:3000/blog/allblog");
-      setBlogs(res.data.blogs);
+      const res = await api.get(
+        `/blog/allblog?page=${pageNo}&limit=${BLOGS_PER_PAGE}`
+      );
+
+      const newBlogs = (res.data.blogs || []).map((blog) => ({
+        ...blog,
+        likesCount: blog.likes?.length || 0,
+      }));
+
+      setBlogs((prev) =>
+        pageNo === 1 ? newBlogs : [...prev, ...newBlogs]
+      );
+
+      setHasMore(res.data.hasMore);
     } catch (err) {
       console.log(err);
     } finally {
@@ -33,14 +50,42 @@ export default function Explore() {
     }
   };
 
+  // 🔹 First load
   useEffect(() => {
-    fetchBlogs();
+    fetchBlogs(1);
   }, []);
 
-  // 🔹 Search + Category Filter
+  // 🔹 Infinite Scroll Observer (no visible loader)
+  useEffect(() => {
+    if (!loaderRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
+        if (first.isIntersecting && hasMore && !loading) {
+          setPage((p) => p + 1);
+        }
+      },
+      {
+        threshold: 0.1,      // thoda pehle trigger ho
+        rootMargin: "200px" // bottom se 200px pe hi next page load
+      }
+    );
+
+    observer.observe(loaderRef.current);
+
+    return () => observer.disconnect();
+  }, [hasMore, loading]);
+
+  // 🔹 Fetch next page
+  useEffect(() => {
+    if (page > 1) fetchBlogs(page);
+  }, [page]);
+
+  // 🔹 Search + Category filter (frontend filter)
   const filteredBlogs = blogs.filter((blog) => {
     const matchSearch =
-      blog.title.toLowerCase().includes(search.toLowerCase()) ||
+      blog.title?.toLowerCase().includes(search.toLowerCase()) ||
       blog.excerpt?.toLowerCase().includes(search.toLowerCase());
 
     const matchCategory =
@@ -49,22 +94,8 @@ export default function Explore() {
     return matchSearch && matchCategory;
   });
 
-  // 🔹 Pagination logic
-  const totalPages = Math.ceil(filteredBlogs.length / BLOGS_PER_PAGE);
-  const startIndex = (currentPage - 1) * BLOGS_PER_PAGE;
-  const paginatedBlogs = filteredBlogs.slice(
-    startIndex,
-    startIndex + BLOGS_PER_PAGE
-  );
-
-  // 🔹 Reset page when search/category changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search, category]);
-
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10">
-
+    <div className="min-h-screen bg-black text-white max-w-7xl mx-auto px-4 py-8">
       {/* 🔍 SEARCH + CATEGORY */}
       <div className="flex flex-col sm:flex-row gap-4 mb-8">
         <input
@@ -72,61 +103,45 @@ export default function Explore() {
           placeholder="Search blogs..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 px-4 py-3 border rounded-xl outline-none focus:ring-2 focus:ring-purple-400"
+          className="w-full sm:flex-1 px-4 py-3 text-sm rounded-xl bg-neutral-900 border border-neutral-800 placeholder-gray-400 outline-none"
         />
 
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="px-4 py-3 border rounded-xl bg-white"
+          className="w-full sm:w-auto px-4 py-3 text-sm rounded-xl bg-neutral-900 border border-neutral-800 text-gray-300 outline-none"
         >
           {categories.map((cat) => (
-            <option key={cat}>{cat}</option>
+            <option key={cat} className="bg-neutral-900">
+              {cat}
+            </option>
           ))}
         </select>
       </div>
 
-      {/* 🧱 BLOG GRID */}
-      {loading ? (
-        <p className="text-center text-gray-500">Loading blogs...</p>
-      ) : paginatedBlogs.length === 0 ? (
-        <p className="text-center text-gray-500">No blogs found</p>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {paginatedBlogs.map((blog) => (
-              <PostCard
-                key={blog.id}
-                id={blog.id}
-                title={blog.title}
-                excerpt={blog.excerpt}
-                category={blog.category}
-                image={blog.media}
-                author={blog.author?.name || "Unknown"}
-                date={new Date(blog.createdAt).toDateString()}
-                readTime={blog.readTime || "5 min"}
-              />
-            ))}
-          </div>
+      {/* 🧱 FEED */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredBlogs.map((blog) => (
+          <PostCard
+            key={blog.id}
+            id={blog.id}
+            title={blog.title}
+            image={blog.media}
+            author={blog.author?.name || "Unknown"}
+            authorProfile={blog.author?.profilepicture}
+            date={blog.date}
+            views={blog.views?.length || 0}   // ✅ PASS VIEWS COUNT
+          />
+        ))}
+      </div>
 
-          {/* 📄 PAGINATION */}
-          <div className="flex justify-center mt-10 gap-2">
-            {[...Array(totalPages)].map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentPage(i + 1)}
-                className={`px-4 py-2 rounded-lg border
-                  ${currentPage === i + 1
-                    ? "bg-purple-600 text-white"
-                    : "bg-white text-gray-700 hover:bg-purple-100"}`}
-              >
-                {i + 1}
-              </button>
-            ))}
-          </div>
-        </>
+      {/* 👇 Invisible Trigger (UI pe kuch nahi dikhega) */}
+      {hasMore && (
+        <div
+          ref={loaderRef}
+          className="h-10 w-full opacity-0"
+        />
       )}
     </div>
   );
 }
-

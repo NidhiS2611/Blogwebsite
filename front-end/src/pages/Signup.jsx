@@ -4,7 +4,6 @@ import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import Authcomponent from "../component/Authcomponent";
 
-
 export default function Signup() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -23,63 +22,101 @@ export default function Signup() {
         email,
         password,
       });
-
-      navigate("/login"); // ✔ Signup → Login
+      navigate("/login");
     } catch (err) {
-      setError(err.response?.data?.message || "Something went wrong.");
+      setError(err.response?.data?.message || "Something went wrong");
     }
   };
 
   return (
-    <Authcomponent title="Create Account" subtitle="Join StudyHub Today">
+    <Authcomponent>
 
-      <form onSubmit={handleSignup} className="space-y-4">
+      {/* MAIN CARD */}
+      <div className="w-full max-w-sm mx-auto bg-black border border-neutral-800 
+      rounded-2xl px-6 py-7 sm:px-7 sm:py-8">
 
-        {error && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-            {error}
+        {/* HEADER INSIDE CARD */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Create account
+          </h1>
+          <p className="text-sm text-gray-400 mt-1">
+            Join BlogSphere today
+          </p>
+        </div>
+
+        <form onSubmit={handleSignup} className="space-y-4">
+
+          {error && (
+            <div className="p-2 text-sm text-red-400 bg-red-500/10 rounded-lg">
+              {error}
+            </div>
+          )}
+
+          {/* NAME */}
+          <div className="relative">
+            <User className="absolute left-3 top-3 w-4 h-4 text-gray-500" />
+            <input
+              type="text"
+              placeholder="Full name"
+              className="w-full pl-10 py-3 bg-neutral-900 text-white rounded-lg text-sm
+              placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-violet-600"
+              onChange={(e) => setName(e.target.value)}
+            />
           </div>
-        )}
 
-        <div className="relative">
-          <User className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Full Name"
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg"
-            onChange={(e) => setName(e.target.value)}
-          />
-        </div>
+          {/* EMAIL */}
+          <div className="relative">
+            <Mail className="absolute left-3 top-3 w-4 h-4 text-gray-500" />
+            <input
+              type="email"
+              placeholder="Email"
+              className="w-full pl-10 py-3 bg-neutral-900 text-white rounded-lg text-sm
+              placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-violet-600"
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
 
-        <div className="relative">
-          <Mail className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-          <input
-            type="email"
-            placeholder="Email"
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg"
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
+          {/* PASSWORD */}
+          <div className="relative">
+            <Lock className="absolute left-3 top-3 w-4 h-4 text-gray-500" />
+            <input
+              type="password"
+              placeholder="Password"
+              className="w-full pl-10 py-3 bg-neutral-900 text-white rounded-lg text-sm
+              placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-violet-600"
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
 
-        <div className="relative">
-          <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-          <input
-            type="password"
-            placeholder="Password"
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg"
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
+          <button
+            type="submit"
+            className="w-full bg-violet-600 hover:bg-violet-700
+            py-3 rounded-full text-sm font-medium transition"
+          >
+            Create account
+          </button>
+        </form>
 
-        <button className="w-full bg-purple-600 text-white py-2 rounded-lg mt-4">
-          Create Account
-        </button>
-      </form>
-
-      <p className="text-center mt-6 text-purple-600 font-semibold">
-        <Link to="/login">Already have an account? Sign In</Link>
-      </p>
+        {/* FOOTER */}
+        <p className="text-center mt-6 text-sm text-gray-400">
+          Already have an account?{" "}
+          <Link to="/login" className="text-white underline">
+            Sign in
+          </Link>
+        </p>
+      </div>
 
     </Authcomponent>
   );
 }
+
+
+
+
+
+
+
+
+
+

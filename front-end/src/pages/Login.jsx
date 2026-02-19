@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
 import { Mail, Lock } from "lucide-react";
 import Authcomponent from "../component/Authcomponent";
+import { requestPermissionAndGetToken } from "../firebase/requestPermission";
 
 export default function Login() {
   const { login } = useAuth();
@@ -16,7 +17,6 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // handle input
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -24,7 +24,6 @@ export default function Login() {
     });
   };
 
-  // handle submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -32,7 +31,8 @@ export default function Login() {
 
     try {
       await login(formData.email, formData.password);
-      navigate("/");
+      requestPermissionAndGetToken();
+      navigate("/home");
     } catch (err) {
       setError(err?.response?.data?.message || "Login failed");
     } finally {
@@ -41,73 +41,86 @@ export default function Login() {
   };
 
   return (
-    <Authcomponent title="Welcome Back" subtitle="Login to StudyHub">
+    <Authcomponent>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      {/* INNER CARD (same as Signup) */}
+      <div className="w-full max-w-sm mx-auto bg-black border border-neutral-800 
+      rounded-2xl px-6 py-7 sm:px-7 sm:py-8">
 
-        {/* Email */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Email
-          </label>
+        {/* HEADER */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Welcome back
+          </h1>
+          <p className="text-sm text-gray-400 mt-1">
+            Login to BlogSphere
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+
+          {/* EMAIL */}
           <div className="relative">
-            <Mail className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+            <Mail className="absolute left-3 top-3 w-4 h-4 text-gray-500" />
             <input
               id="email"
               type="email"
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg"
-              placeholder="Enter your email"
+              placeholder="Email"
               value={formData.email}
               onChange={handleChange}
+              className="w-full pl-10 py-3 bg-neutral-900 text-white rounded-lg text-sm
+              placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-violet-600"
             />
           </div>
-        </div>
 
-        {/* Password */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Password
-          </label>
+          {/* PASSWORD */}
           <div className="relative">
-            <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+            <Lock className="absolute left-3 top-3 w-4 h-4 text-gray-500" />
             <input
               id="password"
               type="password"
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg"
-              placeholder="Enter your password"
+              placeholder="Password"
               value={formData.password}
               onChange={handleChange}
+              className="w-full pl-10 py-3 bg-neutral-900 text-white rounded-lg text-sm
+              placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-violet-600"
             />
           </div>
-        </div>
 
-        {/* Error */}
-        {error && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-            {error}
-          </div>
-        )}
+          {/* ERROR */}
+          {error && (
+            <p className="text-sm text-red-400">
+              {error}
+            </p>
+          )}
 
-        {/* Submit btn */}
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-purple-600 text-white py-2 rounded-lg mt-4"
-        >
-          {loading ? "Signing in..." : "Sign In"}
-        </button>
-      </form>
+          {/* BUTTON */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-violet-600 hover:bg-violet-700
+            py-3 rounded-full text-sm font-medium transition"
+          >
+            {loading ? "Signing in..." : "Sign in"}
+          </button>
+        </form>
 
-      {/* Footer link */}
-      <p className="text-center mt-6 text-purple-600 font-semibold">
-        Don't have an account?{" "}
-        <button onClick={() => navigate("/signup")} className="underline">
-          Create Account
-        </button>
-      </p>
+        {/* FOOTER */}
+        <p className="text-center mt-6 text-sm text-gray-400">
+          Don’t have an account?{" "}
+          <button
+            onClick={() => navigate("/signup")}
+            className="text-white underline"
+          >
+            Create account
+          </button>
+        </p>
+      </div>
 
     </Authcomponent>
   );
 }
+
+
 
 

@@ -3,18 +3,18 @@ import { Outlet } from "react-router-dom";
 
 export default function Homelayout() {
   return (
-    <div className="min-h-screen ">
-
-      {/* FIXED NAVBAR */}
-      <div className="fixed top-0 left-0 w-full z-50">
-        <Navbar />
-      </div>
+    <div className="min-h-screen bg-black text-white">
+      
+      {/* SIDEBAR + MOBILE TOPBAR */}
+      <Navbar />
 
       {/* PAGE CONTENT */}
-      <div className="pt-10 ">
+      <main className="md:ml-64 pt-14">
         <Outlet />
-      </div>
+      </main>
 
     </div>
   );
 }
+
+

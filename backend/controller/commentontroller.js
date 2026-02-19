@@ -2,6 +2,7 @@ const commentmodel = require('../models/commentmodel');
 const blogmodel = require('../models/blogmodel');
 const usermodel = require('../models/usermodel');
 const { email } = require('zod');
+const notifyOnComment = require('../utility/notificationoncomment');
 
 
 const comment = async (req, res) => {
@@ -30,6 +31,7 @@ const comment = async (req, res) => {
     await blog.save();
     user.comments.push(newComment._id);
 await user.save();
+await notifyOnComment({ senderId: userid, receiverId: blog.author, blogId: blogid, commentText: comment });
 console.log(newComment);
 
 
@@ -40,21 +42,29 @@ console.log(newComment);
   }
 };
 
-const editcomment = async(req,res)=>{
+const editcomment = async (req, res) => {
   try {
-    const {comment} = req.body;
+    const { comment } = req.body;
     const commentid = req.params.id;
-    const comments = await commentmodel.findByIdAndUpdate(commentid, {comment:comment}, {new:true});
-    if(!comments) {
-      return res.status(404).json({error:'Comment not found'});
+
+    const updatedComment = await commentmodel
+      .findByIdAndUpdate(commentid, { comment }, { new: true })
+      .populate("user", "name profilepicture"); // optional but best
+
+    if (!updatedComment) {
+      return res.status(404).json({ error: "Comment not found" });
     }
-    await comments.save();
-    res.status(200).json({message:'Comment updated successfully', comments});
-  } catch(error) {
+
+    res.status(200).json({
+      message: "Comment updated successfully",
+      comment: updatedComment,   // 🔥 frontend friendly key
+    });
+  } catch (error) {
     console.error(error);
-    res.status(500).json({error:'Something went wrong'});
+    res.status(500).json({ error: "Something went wrong" });
   }
 };
+
 // DELETE /comment/delete/:id
 const deletecomment = async (req, res) => {
   try {

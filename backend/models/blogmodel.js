@@ -33,6 +33,9 @@ category:{
     default:'Technology',   
     enum:['Technology','Study Tips','Career','Life Hacks','Research','Creative']
 },
+ views: [
+    { type: mongoose.Schema.Types.ObjectId, ref: "user" }
+  ],
 
 
 

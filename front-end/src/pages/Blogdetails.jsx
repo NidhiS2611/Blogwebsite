@@ -1,18 +1,10 @@
 import { useParams, useNavigate } from "react-router-dom";
-import {
-  ArrowLeft,
-  Heart,
-  Share2,
-  UserPlus,
-  CheckCircle,
-  MessageCircle,
-  Navigation,
-} from "lucide-react";
+import { ArrowLeft, Heart, Share2, MessageCircle } from "lucide-react";
 import { useAuth } from "../context/Authcontext";
 import { useEffect, useState } from "react";
-import axios from "axios";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import api from "../services/Axiosinstance";
 
 export default function Blogdetails() {
   const { id } = useParams();
@@ -37,23 +29,18 @@ export default function Blogdetails() {
   useEffect(() => {
     const loadBlog = async () => {
       try {
-        const res = await axios.get(
-          `http://localhost:3000/blog/blog/${id}`,
-          { withCredentials: true }
-        );
-
+        const res = await api.get(`/blog/blog/${id}`);
         const data = res.data.data;
+
         setPost(data);
         setLikesCount(data.likes?.length || 0);
 
-        if (currentUser) {
-          setIsFollowing(
-            currentUser.following?.includes(data.authorData._id)
-          );
+        if (currentUser && data?.authorData?._id) {
+          setIsFollowing(currentUser.following?.includes(data.authorData._id));
           setIsLiked(data.likes?.includes(currentUser._id));
         }
       } catch (err) {
-        console.error(err);
+        console.error("Blog fetch error:", err);
       } finally {
         setLoading(false);
       }
@@ -62,49 +49,64 @@ export default function Blogdetails() {
     loadBlog();
   }, [id, currentUser]);
 
+  /* ================= 🔥 HIT VIEW (ONLY ONCE PER USER) ================= */
+ useEffect(() => {
+   const hitView = async () => {
+      try {
+        if (!id) return;
+        await api.put(`/blog/view/${id}`); // 🔥 backend me jo route banaya tha
+      } catch (err) {
+        console.log("View hit error:", err);
+      }
+    };
+
+    hitView();
+  }, [id]);
+
   /* ================= FOLLOW ================= */
   const handleFollow = async () => {
     if (!currentUser) return navigate("/login");
+    if (!post?.authorData?._id) return;
     if (currentUser._id === post.authorData._id) return;
 
-    setIsFollowing((prev) => !prev);
+    setIsFollowing((p) => !p);
     try {
-      await axios.post(
-        `http://localhost:3000/user/follow/${post.authorData._id}`,
-        {},
-        { withCredentials: true }
-      );
+      await api.post(`/user/follow/${post.authorData._id}`);
     } catch {
-      setIsFollowing((prev) => !prev);
+      setIsFollowing((p) => !p);
     }
   };
 
   /* ================= LIKE ================= */
   const handleLike = async () => {
     if (!currentUser) return navigate("/login");
+    if (!post?._id) return;
 
-    setIsLiked((prev) => !prev);
-    setLikesCount((prev) => (isLiked ? prev - 1 : prev + 1));
+    setIsLiked((p) => !p);
+    setLikesCount((p) => (isLiked ? p - 1 : p + 1));
 
     try {
-      await axios.post(
-        `http://localhost:3000/blog/like/${post._id}`,
-        {},
-        { withCredentials: true }
-      );
+      await api.post(`/blog/like/${post._id}`);
     } catch {
-      setIsLiked((prev) => !prev);
-      setLikesCount((prev) => (isLiked ? prev + 1 : prev - 1));
+      setIsLiked((p) => !p);
+      setLikesCount((p) => (isLiked ? p + 1 : p - 1));
     }
   };
 
   /* ================= COMMENTS ================= */
   const fetchComments = async () => {
-    const res = await axios.get(
-      `http://localhost:3000/comment/fetch/${id}`,
-      { withCredentials: true }
-    );
-    setComments(res.data.comments || []);
+    try {
+      const res = await api.get(`/comment/fetch/${id}`);
+
+      const safeComments = (res.data.comments || []).map((c) => ({
+        ...c,
+        user: typeof c.user === "object" ? c.user : null,
+      }));
+
+      setComments(safeComments);
+    } catch (err) {
+      console.error("Comment fetch error:", err);
+    }
   };
 
   const handleComment = async () => {
@@ -113,165 +115,158 @@ export default function Blogdetails() {
     const temp = {
       _id: Date.now(),
       comment,
-      user: { _id: currentUser._id, name: currentUser.name },
+      user: {
+        _id: currentUser._id,
+        name: currentUser.name,
+      },
     };
 
-    setComments((prev) => [temp, ...prev]);
+    setComments((p) => [temp, ...p]);
     setComment("");
 
     try {
-      const res = await axios.post(
-        `http://localhost:3000/comment/comment/${id}`,
-        { comment },
-        { withCredentials: true }
-      );
+      const res = await api.post(`/comment/comment/${id}`, { comment });
 
-      setComments((prev) =>
-        prev.map((c) => (c._id === temp._id ? res.data.comment : c))
+      const safe = {
+        ...res.data.comment,
+        user:
+          typeof res.data.comment.user === "object"
+            ? res.data.comment.user
+            : temp.user,
+      };
+
+      setComments((p) =>
+        p.map((c) => (c._id === temp._id ? safe : c))
       );
     } catch {
-      setComments((prev) => prev.filter((c) => c._id !== temp._id));
+      setComments((p) => p.filter((c) => c._id !== temp._id));
     }
   };
 
-  const startEdit = (c) => {
-    setEditingId(c._id);
-    setEditText(c.comment);
-  };
-
   const updateComment = async (commentId) => {
-    setComments((prev) =>
-      prev.map((c) =>
-        c._id === commentId ? { ...c, comment: editText } : c
-      )
-    );
-    setEditingId(null);
-    setEditText("");
-
     try {
-      await axios.put(
-        `http://localhost:3000/comment/edit/${commentId}`,
-        { comment: editText },
-        { withCredentials: true }
+      const res = await api.put(`/comment/edit/${commentId}`, {
+        comment: editText,
+      });
+
+      const safe = {
+        ...res.data.comment,
+        user:
+          typeof res.data.comment.user === "object"
+            ? res.data.comment.user
+            : null,
+      };
+
+      setComments((p) =>
+        p.map((c) => (c._id === commentId ? safe : c))
       );
-    } catch {
-      fetchComments();
+    } catch (e) {
+      console.error("Update failed", e);
+    } finally {
+      setEditingId(null);
+      setEditText("");
     }
   };
 
   const deleteComment = async (commentId) => {
-    const backup = comments;
-    setComments((prev) => prev.filter((c) => c._id !== commentId));
+    const old = comments;
+    setComments((p) => p.filter((c) => c._id !== commentId));
 
     try {
-      await axios.delete(
-        `http://localhost:3000/comment/delete/${commentId}`,
-        { withCredentials: true }
-      );
+      await api.delete(`/comment/delete/${commentId}`);
     } catch {
-      setComments(backup);
+      setComments(old);
     }
   };
 
-  if (loading) return <div className="text-center mt-20">Loading...</div>;
-  if (!post) return <div className="text-center mt-20">Not Found</div>;
-   if(!currentUser) return navigate('/login')
+  /* ================= SHARE ================= */
+  const shareOnWhatsApp = () => {
+    if (!post) return;
+    const blogUrl = `${window.location.origin}/blog/${post._id}`;
+    const message = `📘 ${post.title}\n\nBy ${post.authorData?.name || "Author"}\n\n${blogUrl}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+  };
+
+  if (loading)
+    return <div className="text-center mt-20 text-gray-400">Loading...</div>;
+
+  if (!post)
+    return <div className="text-center mt-20 text-gray-400">Not Found</div>;
 
   return (
-    <div className="min-h-screen bg-white">
-
+    <div className="min-h-screen bg-black text-white">
       {/* HERO */}
-      <section className="h-56 sm:h-80 md:h-96">
+      <section className="h-40 sm:h-64 md:h-96">
         <img
           src={`http://localhost:3000/uploads/${post.media}`}
+          alt={post.title}
           className="w-full h-full object-cover"
         />
       </section>
 
-      <article className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
-   
+      <article className="max-w-3xl mx-auto px-3 sm:px-4 py-5">
         <button
-          onClick={() => navigate("/")}
-          className="flex items-center gap-2 text-purple-600 mb-6 text-sm sm:text-base"
+          onClick={() => navigate("/home")}
+          className="flex items-center gap-2 text-purple-400 text-sm mb-3"
         >
-          <ArrowLeft size={18} /> Back
+          <ArrowLeft size={16} /> Back
         </button>
 
-        {/* TITLE + FOLLOW */}
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-4">
-          <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold leading-tight">
-            {post.title}
-          </h1>
+        <h1 className="text-xl sm:text-2xl font-bold">{post.title}</h1>
 
-          <button
-            onClick={handleFollow}
-            className={`w-fit sm:w-auto px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base 
-  font-semibold flex gap-2 items-center whitespace-nowrap ${isFollowing ? "bg-gray-200" : "bg-purple-600 text-white"
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
+          <p className="text-gray-400 text-sm">
+            By {post.authorData?.name || "Unknown"}
+          </p>
+
+          {currentUser && currentUser._id !== post.authorData?._id && (
+            <button
+              onClick={handleFollow}
+              className={`px-4 py-1 rounded text-sm ${
+                isFollowing ? "bg-neutral-800" : "bg-purple-600"
               }`}
-          >
-
-            {isFollowing ? <CheckCircle size={18} /> : <UserPlus size={18} />}
-            {isFollowing ? "Following" : "Follow"}
-          </button>
+            >
+              {isFollowing ? "Following" : "Follow"}
+            </button>
+          )}
         </div>
 
-        <p className="text-gray-500 text-sm sm:text-base mb-8">
-          By <b>{post.authorData?.name}</b>
-        </p>
-
-        {/* CONTENT */}
-  <div className="
-    max-w-none
-    prose
-    prose-sm sm:prose-base lg:prose-lg
-
-    prose-h1:text-2xl sm:prose-h1:text-3xl
-    prose-h2:text-xl sm:prose-h2:text-2xl
-    prose-h3:text-lg sm:prose-h3:text-xl
-
-    prose-p:text-sm sm:prose-p:text-base
-    prose-li:text-sm sm:prose-li:text-base
-
-    prose-strong:text-gray-900
-    prose-headings:font-bold
-  ">
-  <ReactMarkdown
-    remarkPlugins={[remarkGfm]}
-   
-  >
-     {post.content.replace(/##/g, "\n\n## ")}
+     <div className="prose prose-invert max-w-none mt-4 text-xs sm:text-base md:text-md leading-relaxed">
+  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+    {post.content?.replace(/\n/g, "\n\n")}
   </ReactMarkdown>
 </div>
 
 
-        {/* ACTIONS */}
-        <div className="flex flex-wrap gap-6 mt-10 border-t pt-5 text-sm sm:text-base">
-          <button onClick={handleLike} className="flex gap-2 items-center">
-            <Heart className={isLiked ? "fill-red-500 text-red-500" : ""} />
+        <div className="flex gap-6 mt-6 border-t border-neutral-800 pt-4 text-sm">
+          <button onClick={handleLike} className="flex gap-2">
+            <Heart
+              size={18}
+              className={isLiked ? "fill-red-500 text-red-500" : ""}
+            />
             {likesCount}
           </button>
 
-          <button className="flex gap-2 items-center">
-            <Share2 /> Share
+          <button onClick={shareOnWhatsApp} className="flex gap-2">
+            <Share2 size={18} /> Share
           </button>
 
           <button
             onClick={() => {
-              setShowComments(!showComments);
+              setShowComments((p) => !p);
               fetchComments();
             }}
-            className="flex gap-2 items-center"
+            className="flex gap-2"
           >
-            <MessageCircle /> {comments.length}
+            <MessageCircle size={18} /> {comments.length}
           </button>
         </div>
 
-        {/* COMMENTS */}
         {showComments && (
-          <div className="mt-6">
+          <div className="mt-6 space-y-3">
             <textarea
               rows={3}
-              className="w-full border rounded p-2 text-sm"
+              className="w-full bg-black border border-neutral-700 p-2 rounded text-sm"
               placeholder="Write a comment..."
               value={comment}
               onChange={(e) => setComment(e.target.value)}
@@ -279,60 +274,66 @@ export default function Blogdetails() {
 
             <button
               onClick={handleComment}
-              className="mt-2 bg-purple-600 text-white px-4 py-1.5 rounded text-sm"
+              className="bg-purple-600 px-4 py-1 rounded text-sm"
             >
               Post
             </button>
 
-            <div className="mt-6 space-y-3">
+            <div className="space-y-3 mt-4">
               {comments.map((c) => (
-                <div
-                  key={c._id}
-                  className="border rounded px-3 py-2 flex flex-col sm:flex-row sm:justify-between gap-2"
-                >
-                  <div className="flex flex-1 gap-2">
-                    <span className="font-semibold text-sm whitespace-nowrap">
-                      {c.user?.name}
-                    </span>
+                <div key={c._id} className="border border-neutral-800 rounded p-3">
+                  <p className="text-xs text-gray-400">
+                    {c.user?.name || "Unknown user"}
+                  </p>
 
-                    {editingId === c._id ? (
-                      <textarea
-                        rows={2}
-                        className="flex-1 border p-1 text-sm rounded"
+                  {editingId === c._id ? (
+                    <>
+                      <input
                         value={editText}
                         onChange={(e) => setEditText(e.target.value)}
+                        className="w-full bg-black border border-neutral-700 p-2 mt-2 rounded text-sm"
                       />
-                    ) : (
-                      <p className="text-sm text-gray-700 break-words">
-                        {c.comment}
-                      </p>
-                    )}
-                  </div>
-
-                  {currentUser?._id === c.user?._id && (
-                    <div className="flex gap-4 text-xs">
-                      {editingId === c._id ? (
+                      <div className="flex gap-3 mt-2 text-xs">
                         <button
                           onClick={() => updateComment(c._id)}
-                          className="text-green-600"
+                          className="text-green-400"
                         >
                           Save
                         </button>
-                      ) : (
                         <button
-                          onClick={() => startEdit(c)}
-                          className="text-blue-600"
+                          onClick={() => setEditingId(null)}
+                          className="text-gray-400"
                         >
-                          Edit
+                          Cancel
                         </button>
-                      )}
-                      <button
-                        onClick={() => deleteComment(c._id)}
-                        className="text-red-600"
-                      >
-                        Delete
-                      </button>
-                    </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm mt-1">{c.comment}</p>
+
+                      {currentUser?._id &&
+                        c.user?._id &&
+                        currentUser._id === c.user._id && (
+                          <div className="flex gap-3 mt-2 text-xs">
+                            <button
+                              onClick={() => {
+                                setEditingId(c._id);
+                                setEditText(c.comment);
+                              }}
+                              className="text-blue-400"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => deleteComment(c._id)}
+                              className="text-red-400"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                    </>
                   )}
                 </div>
               ))}
@@ -349,15 +350,3 @@ export default function Blogdetails() {
 
 
 
-
-
-
-
-
-/* FORMATTER — BUILDER.IO EXACT STYLE */
-
-
-
-
-/* Simple in-file CommentsSection to avoid missing import runtime errors.
-   Replace with your real component import if you have one elsewhere. */

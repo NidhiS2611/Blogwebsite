@@ -1,64 +1,51 @@
-
-
-
 import { createContext, useState, useEffect, useContext } from "react";
 import axios from "axios";
+import api from "../services/Axiosinstance";
 
-const Authcontext = createContext(
-  {
-    user: null, login: async () => {}, logout: async () => {}, setUser: () => {},
-  }
-);
+const Authcontext = createContext({
+  user: null,
+  loading: true,
+  login: async () => {},
+  logout: async () => {},
+  setUser: () => {},
+});
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  
 
-  // Auto 
-    // 🔐 AUTO LOGIN + JWT EXPIRE HANDLING
+  // 🔐 AUTO LOGIN
   useEffect(() => {
-    axios
-      .get("http://localhost:3000/user/me", { withCredentials: true })
-      .then((res) => {
+    const checkAuth = async () => {
+      try {
+        const res = await api.get(
+          "/user/me",
+          { withCredentials: true }
+        );
         setUser(res.data.user);
+      } catch (err) {
+        setUser(null); // ❌ redirect yaha nahi
+      } finally {
         setLoading(false);
-      })
-      .catch((err) => {
-        setUser(null);
-        setLoading(false);
+      }
+    };
 
-        // ✅ JWT expired → redirect
-        if (err.response?.status === 401) {
-          window.location.href = "/login";
-        }
-      });
+    checkAuth();
   }, []);
 
-  // LOGIN
   const login = async (email, password) => {
-    try {
-      const res = await axios.post(
-        "http://localhost:3000/user/login",
-        { email, password },
-        { withCredentials: true }
-      );
-
-      setUser(res.data.user);
-     
-      
-      return res.data; // IMPORTANT
-    } catch (err) {
-      console.log("LOGIN ERROR:", err.response?.data);
-      
-      throw err;
-    }
+    const res = await api.post(
+      "/user/login",
+      { email, password },
+      { withCredentials: true }
+    );
+    setUser(res.data.user);
+    return res.data;
   };
 
-  // LOGOUT
   const logout = async () => {
-    await axios.post(
-      "http://localhost:3000/user/logout",
+    await api.post(
+      "/user/logout",
       {},
       { withCredentials: true }
     );
@@ -66,7 +53,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <Authcontext.Provider value={{ user, login, logout, setUser }}>
+    <Authcontext.Provider value={{ user, loading, login, logout, setUser }}>
       {children}
     </Authcontext.Provider>
   );

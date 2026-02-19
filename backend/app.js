@@ -7,7 +7,7 @@ const connectDB = require('./config/mongooseconnect');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 app.use(cors({
-    origin: ['http://localhost:5173', "https://stateless-carey-nonpestilently.ngrok-free.dev"],
+    origin: 'http://localhost:5173',
     credentials: true,
 }));
 app.use(cookieParser());
@@ -20,8 +20,10 @@ app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 const userRoutes = require('./route/userroutes');
 const blogRoutes = require('./route/blogroutes');
 const commentRoutes = require('./route/commentroute');
+const notificationRoutes = require('./route/notificationroutes');
 
 app.use('/comment', commentRoutes);
+app.use('/notification', notificationRoutes);
 
 app.use('/blog', blogRoutes);
 app.use('/user', userRoutes);

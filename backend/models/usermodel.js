@@ -16,7 +16,8 @@ const  userschema = new mongoose.Schema({
     },
    
     profilepicture:{
-        type:Buffer
+        type:String,
+        default:'default.jpg'
     },
     bio:{
         type:String,
@@ -46,6 +47,28 @@ const  userschema = new mongoose.Schema({
             ref:'comment'
         }
     ],
+    notificationSettings: {
+      blog: {
+        type: Boolean,
+        default: false, // blog publish notification
+      },
+      follow: {
+        type: Boolean,
+        default: false,
+      },
+      like: {
+        type: Boolean,
+        default: false,
+      },
+      comment: {
+        type: Boolean,
+        default: false,
+      },
+    },
+     fcmToken: {
+      type: String,
+      default: null,
+    },
       created_at:{
         type:Date,
         default:Date.now
