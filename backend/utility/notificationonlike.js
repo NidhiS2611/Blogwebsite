@@ -31,7 +31,8 @@ const notifyOnlike = async ({ senderId, receiverId , blogId }) => {
       receiver.fcmToken &&
       receiver.notificationSettings?.like === true;
       console.log( "receiver.notificationSettings", receiver.notificationSettings);
-      
+       console.log("fcmToken of rece", receiver.fcmToken);
+       
 
     // 🔹 STEP 3: SEND PUSH (only if allowed)
     if (isPushAllowed) {
@@ -48,9 +49,9 @@ const notifyOnlike = async ({ senderId, receiverId , blogId }) => {
       }
     }
 
-    console.log("✅ Follow notification created");
+    console.log("✅  notification created");
   } catch (error) {
-    console.error("❌ notifyOnFollow error:", error);
+    console.error("❌ notifyOnLike error:", error);
   }
 };
 

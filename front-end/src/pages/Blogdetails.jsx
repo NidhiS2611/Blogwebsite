@@ -37,7 +37,9 @@ export default function Blogdetails() {
 
         if (currentUser && data?.authorData?._id) {
           setIsFollowing(currentUser.following?.includes(data.authorData._id));
-          setIsLiked(data.likes?.includes(currentUser._id));
+          setIsLiked(
+  data.likes?.some(id => id.toString() === currentUser._id.toString())
+);
         }
       } catch (err) {
         console.error("Blog fetch error:", err);
@@ -64,18 +66,28 @@ export default function Blogdetails() {
   }, [id]);
 
   /* ================= FOLLOW ================= */
-  const handleFollow = async () => {
-    if (!currentUser) return navigate("/login");
-    if (!post?.authorData?._id) return;
-    if (currentUser._id === post.authorData._id) return;
 
-    setIsFollowing((p) => !p);
-    try {
-      await api.post(`/user/follow/${post.authorData._id}`);
-    } catch {
-      setIsFollowing((p) => !p);
-    }
-  };
+const handleFollow = async () => {
+  if (!currentUser) return navigate("/login");
+  if (!post?.authorData?._id) return;
+  if (currentUser._id === post.authorData._id) return;
+
+  try {
+    await api.post(`/user/follow/${post.authorData._id}`);
+
+    // 🔥 updated logged in user lao
+    const res = await api.get("/user/me");
+
+    // 🔥 AuthContext me update karo
+    setUser(res.data.user);
+
+    // 🔥 UI update karo
+    setIsFollowing(res.data.user.following.includes(post.authorData._id));
+
+  } catch (err) {
+    console.log(err);
+  }
+};
 
   /* ================= LIKE ================= */
   const handleLike = async () => {

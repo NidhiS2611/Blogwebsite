@@ -115,49 +115,64 @@ const login = async (req, res) => {
   }
 }
 const followUnfollowUser = async (req, res) => {
-    try {
-        const userfollowedid = req.params.id;  // jis user ko follow karna hai
-        const userid = req.user.id // jo follow kar raha hai
+  try {
+    const userfollowedid = req.params.id;  
+    const userid = req.user.id;
 
-        if (userid === userfollowedid) {
-            return res.status(400).json({ error: "You cannot follow yourself" });
-        }
-
-        const user = await usermodel.findById(userid);
-        const followedUser = await usermodel.findById(userfollowedid);
-
-        if (!user || !followedUser) {
-            return res.status(404).json({ error: "User not found" });
-        }
-
-        // ---- CHECK IF ALREADY FOLLOWING ----
-        const isFollowing = user.following.includes(userfollowedid);
-
-        if (isFollowing) {
-            // Already following → UNFOLLOW
-            user.following = user.following.filter(id => id.toString() !== userfollowedid);
-            followedUser.followers = followedUser.followers.filter(id => id.toString() !== userid);
-
-            await user.save();
-            await followedUser.save();
-
-            return res.status(200).json({ message: "Unfollowed successfully" });
-        } else {
-            // NOT FOLLOWING → FOLLOW
-            user.following.push(userfollowedid);
-            followedUser.followers.push(userid);
-
-            await user.save();
-            await followedUser.save();
-             await notifyOnFollow({ senderId: userid, receiverId: userfollowedid });
-
-            return res.status(200).json({ message: "Followed successfully" });
-        }
-
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ error: "Something went wrong" });
+    if (userid === userfollowedid) {
+      return res.status(400).json({ error: "You cannot follow yourself" });
     }
+
+    const user = await usermodel.findById(userid);
+    const followedUser = await usermodel.findById(userfollowedid);
+
+    if (!user || !followedUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const isAlreadyFollowing = user.following
+      .map(id => id.toString())
+      .includes(userfollowedid);
+
+    let isFollowing;
+
+    if (isAlreadyFollowing) {
+      // 🔹 UNFOLLOW
+      user.following = user.following.filter(
+        id => id.toString() !== userfollowedid
+      );
+
+      followedUser.followers = followedUser.followers.filter(
+        id => id.toString() !== userid
+      );
+
+      isFollowing = false;
+
+    } else {
+      // 🔹 FOLLOW
+      user.following.push(userfollowedid);
+      followedUser.followers.push(userid);
+
+      isFollowing = true;
+
+      await notifyOnFollow({
+        senderId: userid,
+        receiverId: userfollowedid
+      });
+    }
+
+    await user.save();
+    await followedUser.save();
+
+    return res.status(200).json({
+      message: isFollowing ? "Followed successfully" : "Unfollowed successfully",
+      isFollowing   // 👈 IMPORTANT
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Something went wrong" });
+  }
 };
 
 
@@ -227,8 +242,9 @@ const savetoken = async (req,res)=>{
   if (!user) {    
     return res.status(404).json({ message: 'User not found' });
   }
+   console.log('Token saved for user:', user.fcmToken);
   res.status(200).json({ message: 'Token saved successfully', user });
-  console.log('FCM Token saved:', user.fcmToken);
+  
 
   }
   catch(err){
