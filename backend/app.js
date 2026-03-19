@@ -7,7 +7,7 @@ const connectDB = require('./config/mongooseconnect');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 app.use(cors({
-    origin: 'http://localhost:5173',
+    origin: 'https://blogwebsite-pi-silk.vercel.app/',
     credentials: true,
 }));
 app.use(cookieParser());
