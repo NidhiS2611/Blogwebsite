@@ -5,6 +5,7 @@ const { generatetoken } = require('../utils/generatetoken');
 const { z } = require('zod');
 const blog = require('../models/blogmodel');
 const notifyOnFollow = require('../utility/notificationonfollow');  
+const { trusted } = require('mongoose');
 
 
 const userschema = z.object({
@@ -53,6 +54,8 @@ const register = async (req, res) => {
     res.cookie('token', token, {
       httpOnly: true,
       maxAge: 30 * 24 * 60 * 60 * 1000,
+      secure: true,
+      sameSite: 'None',
     })
 
 
@@ -94,8 +97,8 @@ const login = async (req, res) => {
     res.cookie('token', token, {
       httpOnly: true,
       maxAge: 30 * 24 * 60 * 60 * 1000,
-      secure: false,
-      sameSite: 'lax',
+      secure: true,
+      sameSite: 'None',
       
     })
 
