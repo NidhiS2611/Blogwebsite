@@ -210,7 +210,7 @@ const handleFollow = async () => {
       {/* HERO */}
       <section className="h-40 sm:h-64 md:h-96">
         <img
-          src={`http://localhost:3000/uploads/${post.media}`}
+          src={`https://blogwebsite-20pw.onrender.com/uploads/${post.media}`}
           alt={post.title}
           className="w-full h-full object-cover"
         />
