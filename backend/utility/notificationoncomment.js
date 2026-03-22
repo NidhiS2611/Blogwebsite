@@ -41,7 +41,7 @@ const notifyOnComment = async ({
     // 🔹 STEP 2: PUSH permission check
     const isPushAllowed =
       receiver.fcmToken &&
-      receiver.notificationSettings?.comment !== false; // default ON
+      receiver.notificationSettings?.comment === true; // default ON
 
     // 🔹 STEP 3: SEND PUSH
     if (isPushAllowed) {
