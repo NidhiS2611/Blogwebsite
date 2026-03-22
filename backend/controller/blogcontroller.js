@@ -214,12 +214,12 @@ const getFeedBlogs = async (req, res) => {
       excerpt: b.excerpt,
       category: b.category,
       media: b.media
-        ? `http://localhost:3000/uploads/${b.media}`
+        ? `https://blogwebsite-20pw.onrender.com/uploads/${b.media}`
         : "https://via.placeholder.com/400x200?text=Blog",
         author: {
         name: b.author?.name || "Unknown",
         profilePicture: b.author?.profilepicture
-          ? `http://localhost:3000/uploads/${b.author.profilepicture}`
+          ? `https://blogwebsite-20pw.onrender.com/uploads/${b.author.profilepicture}`
           : "https://www.gravatar.com/avatar/00000000000000000000000000000000",
       },
       date: new Date(b.createdAt).toLocaleDateString("en-US", {
@@ -352,7 +352,7 @@ const getallBlogs = async (req, res) => {
       excerpt: b.excerpt,
       category: b.category,
       media: b.media
-        ? `http://localhost:3000/uploads/${b.media}`
+        ? `https://blogwebsite-20pw.onrender.com/uploads/${b.media}`
         : "https://via.placeholder.com/400x200?text=Blog",
       author: {
         name: b.author?.name || "Unknown",
