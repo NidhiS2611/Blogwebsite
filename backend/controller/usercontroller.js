@@ -210,7 +210,7 @@ getUserProfile = async (req, res) => {
         bio: user.bio,
         profilepicture:  
          user.profilepicture
-        ? `http://localhost:3000/uploads/${user.profilepicture}`
+        ? `https://blogwebsite-20pw.onrender.com/uploads/${user.profilepicture}`
         : "https://via.placeholder.com/400x200?text=Blog",
 
         followersCount: user.followers.length,
