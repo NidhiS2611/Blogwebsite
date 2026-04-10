@@ -357,7 +357,7 @@ const getallBlogs = async (req, res) => {
       author: {
         name: b.author?.name || "Unknown",
         profilePicture: b.author?.profilepicture
-          ? `http://localhost:3000/uploads/${b.author.profilepicture}`
+          ? `https://blogwebsite-20pw.onrender.com/uploads/${b.author.profilepicture}`
           : "https://www.gravatar.com/avatar/00000000000000000000000000000000",
       },
       views: b.views || 0,
