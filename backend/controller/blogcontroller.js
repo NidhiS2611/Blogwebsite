@@ -15,7 +15,7 @@ const createblog = async (req, res) => {
 
   try {
     const { title, content, excerpt, category } = req.body;
-    const media = req.file ? req.file.filename : "default.jpg";
+    const media = req.file ? req.file.path : "default.jpg";
 
     if (!title || !content || !excerpt || !category) {
       res.json({ msg: "Title, content, excerpt, and category are required" });
@@ -214,12 +214,12 @@ const getFeedBlogs = async (req, res) => {
       excerpt: b.excerpt,
       category: b.category,
       media: b.media
-        ? `https://blogwebsite-20pw.onrender.com/uploads/${b.media}`
+        ? b.media
         : "https://via.placeholder.com/400x200?text=Blog",
         author: {
         name: b.author?.name || "Unknown",
         profilePicture: b.author?.profilepicture
-          ? `https://blogwebsite-20pw.onrender.com/uploads/${b.author.profilepicture}`
+          ? b.author.profilepicture
           : "https://www.gravatar.com/avatar/00000000000000000000000000000000",
       },
       date: new Date(b.createdAt).toLocaleDateString("en-US", {
@@ -352,12 +352,12 @@ const getallBlogs = async (req, res) => {
       excerpt: b.excerpt,
       category: b.category,
       media: b.media
-        ? `https://blogwebsite-20pw.onrender.com/uploads/${b.media}`
+        ? b.media
         : "https://via.placeholder.com/400x200?text=Blog",
       author: {
         name: b.author?.name || "Unknown",
         profilePicture: b.author?.profilepicture
-          ? `https://blogwebsite-20pw.onrender.com/uploads/${b.author.profilepicture}`
+          ? b.author.profilepicture
           : "https://www.gravatar.com/avatar/00000000000000000000000000000000",
       },
       views: b.views || 0,

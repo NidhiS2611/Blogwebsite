@@ -210,7 +210,7 @@ getUserProfile = async (req, res) => {
         bio: user.bio,
         profilepicture:  
          user.profilepicture
-        ? `https://blogwebsite-20pw.onrender.com/uploads/${user.profilepicture}`
+        ? user.profilepicture
         : "https://via.placeholder.com/400x200?text=Blog",
 
         followersCount: user.followers.length,
@@ -328,7 +328,7 @@ const updateprofile = async (req, res) => {
   try {
     const userid = req.user.id;
     const { name, bio } = req.body;
-    const profilepicture = req.file ? req.file.filename : undefined;
+    const profilepicture = req.file ? req.file.path : undefined;
 
     const updateData = {};
     if (name) updateData.name = name;

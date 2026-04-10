@@ -2,6 +2,7 @@
   "dependencies": {
     "@google/genai": "^1.41.0",
     "bcryptjs": "^3.0.3",
+    "cloudinary": "^1.41.3",
     "cookie-parser": "^1.4.7",
     "corn": "^0.0.1",
     "cors": "^2.8.5",
@@ -13,6 +14,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.19.3",
     "multer": "^2.0.2",
+    "multer-storage-cloudinary": "^4.0.0",
     "nodemon": "^3.1.11",
     "openai": "^6.22.0",
     "path": "^0.12.7",
