@@ -329,6 +329,7 @@ const updateprofile = async (req, res) => {
     const userid = req.user.id;
     const { name, bio } = req.body;
     const profilepicture = req.file ? req.file.path : undefined;
+    console.log('req.file:', req.file);
 
     const updateData = {};
     if (name) updateData.name = name;
