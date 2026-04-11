@@ -224,11 +224,11 @@ const handleFollow = async () => {
           <ArrowLeft size={16} /> Back
         </button>
 
-        <div className="flex gap-3 items-center mb-4">post.category && (
+        <div className="flex gap-3 items-center mb-4">
             <span className="px-3 py-1 bg-gradient-to-r from-purple-400 to-blue-400 rounded-full text-sm font-semibold">
               {post.category}
             </span>
-          )</div>
+          </div>
 
         <h1 className="text-xl sm:text-2xl font-bold">{post.title}</h1>
 
@@ -248,7 +248,7 @@ const handleFollow = async () => {
             </button>
           )}
         </div>
-        <div className="text-gray-400 text-sm mt-1">{post.excerpt}</div>
+        <div className="text-gray-400 text-xs sm:text-sm md:text-base mt-1">{post.excerpt}</div>
 
      <div className="prose prose-invert max-w-none mt-4 text-xs sm:text-base md:text-md leading-relaxed">
   <ReactMarkdown remarkPlugins={[remarkGfm]}>
