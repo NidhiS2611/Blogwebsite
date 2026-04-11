@@ -356,10 +356,8 @@ const getallBlogs = async (req, res) => {
         : "https://via.placeholder.com/400x200?text=Blog",
       author: {
         name: b.author?.name || "Unknown",
-        profilePicture: b.author?.profilepicture
-          ? b.author.profilepicture
-          : "https://www.gravatar.com/avatar/00000000000000000000000000000000",
-      },
+        profilePicture: b.author?.profilepicture},
+         
       views: b.views || 0,
         
         date: new Date(b.createdAt).toLocaleDateString("en-US", {
