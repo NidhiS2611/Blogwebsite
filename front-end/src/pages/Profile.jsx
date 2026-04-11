@@ -309,7 +309,7 @@ export default function Profile() {
                       {blog.excerpt}
                     </p>
                   )}
-                  <p className="text-gray-300 mt-2">{blog.content}</p>
+                  
 
                   <div className="flex flex-wrap gap-4 mt-3 text-sm items-center">
                     <button
