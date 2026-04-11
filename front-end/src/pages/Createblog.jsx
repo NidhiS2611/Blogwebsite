@@ -105,7 +105,7 @@ export default function CreateBlog() {
 
         {/* Back */}
         <button
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/home")}
           className="flex items-center gap-2 text-purple-400 font-semibold mb-6"
         >
           <ArrowLeft size={18} /> Back
