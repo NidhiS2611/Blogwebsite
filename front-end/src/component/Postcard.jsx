@@ -40,7 +40,7 @@ function PostCard({
       // Toggle UI immediately for better UX
       setIsBookmarked((prev) => !prev);
       
-      await api.post(`/user/bookmark/${id}`);
+      await api.put(`/user/bookmark/${id}`);
     } catch (err) {
       // Reverse UI if API fails
       setIsBookmarked((prev) => !prev);
