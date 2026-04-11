@@ -117,7 +117,7 @@ export default function Forgotpasswordflow() {
 
           {/* Back to Login */}
           <div className="mt-8 text-center border-t border-zinc-800 pt-6">
-            <a href="/user/login" className="text-sm text-zinc-500 hover:text-purple-400 transition-colors font-medium">
+            <a href="/login" className="text-sm text-zinc-500 hover:text-purple-400 transition-colors font-medium">
               ← Back to Login
             </a>
           </div>
