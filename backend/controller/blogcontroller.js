@@ -456,5 +456,51 @@ const getTodayHighlight = async (req, res) => {
   }
 };
 
+const getSavedBlogs = async (req, res) => {
+  try {
+    // 1. User dhoondo aur uske 'bookmarks' array ko populate karo
+    const user = await usermodel.findById(req.user.id).populate({
+      path: "bookmarks",
+      populate: { 
+        path: "author", 
+        select: "name profilepicture" // Author ki info bhi le aao PostCard ke liye
+      }
+    }).lean();
 
-module.exports = { createblog, toggleLike, getSingleBlog, getFeedBlogs, updateBlog, generateBlogwithai, getallBlogs ,updateViewCount,deleteBlog, getTodayHighlight};
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // 2. Saved blogs ko format karo jaisa Home page par hai
+    const formatted = user.bookmarks.map((b) => ({
+      id: b._id,
+      title: b.title,
+      excerpt: b.excerpt,
+      category: b.category,
+      media: b.media || "https://via.placeholder.com/400x200?text=Blog",
+      author: {
+        name: b.author?.name || "Unknown",
+        profilepicture: b.author?.profilepicture,
+      },
+      date: new Date(b.createdAt).toLocaleDateString("en-US", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }),
+      likes: Array.isArray(b.likes) ? b.likes.length : 0,
+      views: Array.isArray(b.views) ? b.views.length : 0, // Views array length ya count
+    }));
+
+    res.status(200).json({
+      success: true,
+      blogs: formatted, // Isse tumhara frontend loop asani se chal jayega
+    });
+
+  } catch (err) {
+    console.log("Saved blogs error:", err);
+    res.status(500).json({ message: "Failed to fetch saved blogs" });
+  }
+};
+
+
+module.exports = { createblog, toggleLike, getSingleBlog, getFeedBlogs, updateBlog, generateBlogwithai, getallBlogs ,updateViewCount,deleteBlog, getTodayHighlight, getSavedBlogs};
