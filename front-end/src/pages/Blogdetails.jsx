@@ -9,7 +9,7 @@ import api from "../services/Axiosinstance";
 export default function Blogdetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, setUser } = useAuth(); // setUser add kiya follow update ke liye
 
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -38,8 +38,8 @@ export default function Blogdetails() {
         if (currentUser && data?.authorData?._id) {
           setIsFollowing(currentUser.following?.includes(data.authorData._id));
           setIsLiked(
-  data.likes?.some(id => id.toString() === currentUser._id.toString())
-);
+            data.likes?.some(id => id.toString() === currentUser._id.toString())
+          );
         }
       } catch (err) {
         console.error("Blog fetch error:", err);
@@ -51,43 +51,34 @@ export default function Blogdetails() {
     loadBlog();
   }, [id, currentUser]);
 
-  /* ================= 🔥 HIT VIEW (ONLY ONCE PER USER) ================= */
- useEffect(() => {
-   const hitView = async () => {
+  /* ================= 🔥 HIT VIEW ================= */
+  useEffect(() => {
+    const hitView = async () => {
       try {
         if (!id) return;
-        await api.put(`/blog/view/${id}`); // 🔥 backend me jo route banaya tha
+        await api.put(`/blog/view/${id}`);
       } catch (err) {
         console.log("View hit error:", err);
       }
     };
-
     hitView();
   }, [id]);
 
   /* ================= FOLLOW ================= */
+  const handleFollow = async () => {
+    if (!currentUser) return navigate("/login");
+    if (!post?.authorData?._id) return;
+    if (currentUser._id === post.authorData._id) return;
 
-const handleFollow = async () => {
-  if (!currentUser) return navigate("/login");
-  if (!post?.authorData?._id) return;
-  if (currentUser._id === post.authorData._id) return;
-
-  try {
-    await api.post(`/user/follow/${post.authorData._id}`);
-
-    // 🔥 updated logged in user lao
-    const res = await api.get("/user/me");
-
-    // 🔥 AuthContext me update karo
-    setUser(res.data.user);
-
-    // 🔥 UI update karo
-    setIsFollowing(res.data.user.following.includes(post.authorData._id));
-
-  } catch (err) {
-    console.log(err);
-  }
-};
+    try {
+      await api.post(`/user/follow/${post.authorData._id}`);
+      const res = await api.get("/user/me");
+      setUser(res.data.user);
+      setIsFollowing(res.data.user.following.includes(post.authorData._id));
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
   /* ================= LIKE ================= */
   const handleLike = async () => {
@@ -105,16 +96,14 @@ const handleFollow = async () => {
     }
   };
 
-  /* ================= COMMENTS ================= */
+  /* ================= COMMENTS LOGIC ================= */
   const fetchComments = async () => {
     try {
       const res = await api.get(`/comment/fetch/${id}`);
-
       const safeComments = (res.data.comments || []).map((c) => ({
         ...c,
         user: typeof c.user === "object" ? c.user : null,
       }));
-
       setComments(safeComments);
     } catch (err) {
       console.error("Comment fetch error:", err);
@@ -123,33 +112,20 @@ const handleFollow = async () => {
 
   const handleComment = async () => {
     if (!currentUser || !comment.trim()) return;
-
     const temp = {
       _id: Date.now(),
       comment,
-      user: {
-        _id: currentUser._id,
-        name: currentUser.name,
-      },
+      user: { _id: currentUser._id, name: currentUser.name },
     };
-
     setComments((p) => [temp, ...p]);
     setComment("");
-
     try {
       const res = await api.post(`/comment/comment/${id}`, { comment });
-
       const safe = {
         ...res.data.comment,
-        user:
-          typeof res.data.comment.user === "object"
-            ? res.data.comment.user
-            : temp.user,
+        user: typeof res.data.comment.user === "object" ? res.data.comment.user : temp.user,
       };
-
-      setComments((p) =>
-        p.map((c) => (c._id === temp._id ? safe : c))
-      );
+      setComments((p) => p.map((c) => (c._id === temp._id ? safe : c)));
     } catch {
       setComments((p) => p.filter((c) => c._id !== temp._id));
     }
@@ -157,194 +133,140 @@ const handleFollow = async () => {
 
   const updateComment = async (commentId) => {
     try {
-      const res = await api.put(`/comment/edit/${commentId}`, {
-        comment: editText,
-      });
-
-      const safe = {
-        ...res.data.comment,
-        user:
-          typeof res.data.comment.user === "object"
-            ? res.data.comment.user
-            : null,
-      };
-
-      setComments((p) =>
-        p.map((c) => (c._id === commentId ? safe : c))
-      );
-    } catch (e) {
-      console.error("Update failed", e);
-    } finally {
-      setEditingId(null);
-      setEditText("");
-    }
+      const res = await api.put(`/comment/edit/${commentId}`, { comment: editText });
+      setComments((p) => p.map((c) => (c._id === commentId ? { ...c, comment: res.data.comment.comment } : c)));
+    } catch (e) { console.error(e); } finally { setEditingId(null); }
   };
 
   const deleteComment = async (commentId) => {
     const old = comments;
     setComments((p) => p.filter((c) => c._id !== commentId));
-
-    try {
-      await api.delete(`/comment/delete/${commentId}`);
-    } catch {
-      setComments(old);
-    }
+    try { await api.delete(`/comment/delete/${commentId}`); } catch { setComments(old); }
   };
 
-  /* ================= SHARE ================= */
   const shareOnWhatsApp = () => {
-    if (!post) return;
     const blogUrl = `${window.location.origin}/blog/${post._id}`;
-    const message = `📘 ${post.title}\n\nBy ${post.authorData?.name || "Author"}\n\n${blogUrl}`;
+    const message = `📘 ${post.title}\n\n${blogUrl}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
   };
 
-  if (loading)
-    return <div className="text-center mt-20 text-gray-400">Loading...</div>;
-
-  if (!post)
-    return <div className="text-center mt-20 text-gray-400">Not Found</div>;
+  if (loading) return <div className="text-center mt-20 text-gray-400">Loading...</div>;
+  if (!post) return <div className="text-center mt-20 text-gray-400">Not Found</div>;
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* HERO */}
-      <section className="h-40 sm:h-64 md:h-96">
-        <img
-          src={post.media}
-          alt={post.title}
-          className="w-full h-full object-cover"
-        />
+      {/* HERO IMAGE */}
+      <section className="h-48 sm:h-72 md:h-96 w-full relative">
+        <img src={post.media} alt={post.title} className="w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent"></div>
       </section>
 
-      <article className="max-w-3xl mx-auto px-3 sm:px-4 py-5">
-        <button
-          onClick={() => navigate("/home")}
-          className="flex items-center gap-2 text-purple-400 text-sm mb-3"
-        >
+      <article className="max-w-3xl mx-auto px-4 py-6">
+        {/* BACK BUTTON */}
+        <button onClick={() => navigate("/home")} className="flex items-center gap-2 text-purple-400 text-sm mb-6">
           <ArrowLeft size={16} /> Back
         </button>
 
-        <h1 className="text-xl sm:text-2xl font-bold">{post.title}</h1>
+        {/* 🏷️ CATEGORY */}
+        {post.category && (
+          <span className="text-purple-500 font-bold text-xs uppercase tracking-widest mb-2 block">
+            {post.category}
+          </span>
+        )}
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
-          <p className="text-gray-400 text-sm">
-            By {post.authorData?.name || "Unknown"}
+        {/* 📝 TITLE */}
+        <h1 className="text-2xl sm:text-4xl font-bold mb-4 leading-tight">{post.title}</h1>
+
+        {/* 📋 EXCERPT */}
+        {post.excerpt && (
+          <p className="text-gray-400 text-lg italic mb-6 border-l-4 border-purple-600 pl-4">
+            {post.excerpt}
           </p>
+        )}
+
+        {/* AUTHOR & EXPERTISE */}
+        <div className="flex items-center justify-between border-b border-neutral-800 pb-6 mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center text-purple-500 font-bold">
+              {post.authorData?.name?.charAt(0)}
+            </div>
+            <div>
+              <p className="text-sm font-bold text-gray-200">{post.authorData?.name || "Unknown"}</p>
+              {post.authorData?.expertise && (
+                <p className="text-purple-400 text-[10px]">Expert in: {post.authorData.expertise}</p>
+              )}
+            </div>
+          </div>
 
           {currentUser && currentUser._id !== post.authorData?._id && (
             <button
               onClick={handleFollow}
-              className={`px-4 py-1 rounded text-sm ${
-                isFollowing ? "bg-neutral-800" : "bg-purple-600"
-              }`}
+              className={`px-4 py-1 rounded-full text-xs ${isFollowing ? "bg-neutral-800 border border-neutral-700 text-gray-400" : "bg-purple-600 text-white"}`}
             >
               {isFollowing ? "Following" : "Follow"}
             </button>
           )}
         </div>
 
-     <div className="prose prose-invert max-w-none mt-4 text-xs sm:text-base md:text-md leading-relaxed">
-  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-    {post.content?.replace(/\n/g, "\n\n")}
-  </ReactMarkdown>
-</div>
+        {/* 📖 MAIN CONTENT */}
+        <div className="prose prose-invert max-w-none mt-4 text-gray-300 leading-relaxed">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {post.content?.replace(/\n/g, "\n\n")}
+          </ReactMarkdown>
+        </div>
 
-
-        <div className="flex gap-6 mt-6 border-t border-neutral-800 pt-4 text-sm">
-          <button onClick={handleLike} className="flex gap-2">
-            <Heart
-              size={18}
-              className={isLiked ? "fill-red-500 text-red-500" : ""}
-            />
-            {likesCount}
+        {/* ACTIONS */}
+        <div className="flex gap-8 mt-10 border-t border-neutral-800 pt-6">
+          <button onClick={handleLike} className="flex gap-2 items-center">
+            <Heart size={20} className={isLiked ? "fill-red-500 text-red-500" : "text-gray-400"} />
+            <span className={isLiked ? "text-red-500" : "text-gray-400"}>{likesCount}</span>
           </button>
 
-          <button onClick={shareOnWhatsApp} className="flex gap-2">
-            <Share2 size={18} /> Share
+          <button onClick={shareOnWhatsApp} className="flex gap-2 items-center text-gray-400">
+            <Share2 size={20} /> Share
           </button>
 
           <button
-            onClick={() => {
-              setShowComments((p) => !p);
-              fetchComments();
-            }}
-            className="flex gap-2"
+            onClick={() => { setShowComments((p) => !p); fetchComments(); }}
+            className="flex gap-2 items-center text-gray-400"
           >
-            <MessageCircle size={18} /> {comments.length}
+            <MessageCircle size={20} /> {comments.length}
           </button>
         </div>
 
+        {/* COMMENTS SECTION */}
         {showComments && (
-          <div className="mt-6 space-y-3">
+          <div className="mt-8 space-y-4">
             <textarea
               rows={3}
-              className="w-full bg-black border border-neutral-700 p-2 rounded text-sm"
-              placeholder="Write a comment..."
+              className="w-full bg-neutral-900 border border-neutral-800 p-3 rounded-lg text-sm outline-none focus:border-purple-600"
+              placeholder="Join the discussion..."
               value={comment}
               onChange={(e) => setComment(e.target.value)}
             />
+            <button onClick={handleComment} className="bg-purple-600 px-6 py-2 rounded-lg text-sm font-bold">Post Comment</button>
 
-            <button
-              onClick={handleComment}
-              className="bg-purple-600 px-4 py-1 rounded text-sm"
-            >
-              Post
-            </button>
-
-            <div className="space-y-3 mt-4">
+            <div className="space-y-4 mt-6">
               {comments.map((c) => (
-                <div key={c._id} className="border border-neutral-800 rounded p-3">
-                  <p className="text-xs text-gray-400">
-                    {c.user?.name || "Unknown user"}
-                  </p>
-
+                <div key={c._id} className="bg-neutral-900/50 p-4 rounded-lg border border-neutral-800">
+                  <p className="text-xs text-purple-400 font-medium mb-1">{c.user?.name || "User"}</p>
                   {editingId === c._id ? (
-                    <>
-                      <input
-                        value={editText}
-                        onChange={(e) => setEditText(e.target.value)}
-                        className="w-full bg-black border border-neutral-700 p-2 mt-2 rounded text-sm"
-                      />
+                    <div className="mt-2">
+                      <input value={editText} onChange={(e) => setEditText(e.target.value)} className="w-full bg-black border border-neutral-700 p-2 rounded text-sm" />
                       <div className="flex gap-3 mt-2 text-xs">
-                        <button
-                          onClick={() => updateComment(c._id)}
-                          className="text-green-400"
-                        >
-                          Save
-                        </button>
-                        <button
-                          onClick={() => setEditingId(null)}
-                          className="text-gray-400"
-                        >
-                          Cancel
-                        </button>
+                        <button onClick={() => updateComment(c._id)} className="text-green-400">Save</button>
+                        <button onClick={() => setEditingId(null)} className="text-gray-400">Cancel</button>
                       </div>
-                    </>
+                    </div>
                   ) : (
                     <>
-                      <p className="text-sm mt-1">{c.comment}</p>
-
-                      {currentUser?._id &&
-                        c.user?._id &&
-                        currentUser._id === c.user._id && (
-                          <div className="flex gap-3 mt-2 text-xs">
-                            <button
-                              onClick={() => {
-                                setEditingId(c._id);
-                                setEditText(c.comment);
-                              }}
-                              className="text-blue-400"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => deleteComment(c._id)}
-                              className="text-red-400"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        )}
+                      <p className="text-sm text-gray-200">{c.comment}</p>
+                      {currentUser?._id === c.user?._id && (
+                        <div className="flex gap-4 mt-3 text-[10px] font-bold uppercase tracking-wider">
+                          <button onClick={() => { setEditingId(c._id); setEditText(c.comment); }} className="text-blue-400">Edit</button>
+                          <button onClick={() => deleteComment(c._id)} className="text-red-500">Delete</button>
+                        </div>
+                      )}
                     </>
                   )}
                 </div>
