@@ -72,8 +72,15 @@ const  userschema = new mongoose.Schema({
       created_at:{
         type:Date,
         default:Date.now
-      }
-      
+      },
+      // ... tumhara baki schema
+    bookmarks: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'blog' // Ye blog model ko point karega
+        }
+    ],
+
 
 
 

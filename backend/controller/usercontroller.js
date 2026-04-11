@@ -377,5 +377,33 @@ const updateprofile = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+const toggleBookmark = async (req, res) => {
+  try {
+    const userId = req.user.id || req.user._id; // Auth middleware se mil jayega
+    const blogId = req.params.id; // URL se mil jayega
 
-module.exports = { register, login, followUnfollowUser ,getUserProfile, savetoken, updatenotification, getnotificationsetting,logout, updateprofile, changePassword};
+    const user = await usermodel.findById(userId);
+    
+    // Check karo ki pehle se bookmark hai ya nahi
+    const isBookmarked = user.bookmarks.includes(blogId);
+
+    if (isBookmarked) {
+      // Agar hai toh nikal do (Remove)
+      user.bookmarks = user.bookmarks.filter((id) => id.toString() !== blogId);
+    } else {
+      // Agar nahi hai toh add kar do (Add)
+      user.bookmarks.push(blogId);
+    }
+
+    await user.save();
+    res.status(200).json({ 
+      success: true, 
+      message: isBookmarked ? "Removed from bookmarks" : "Added to bookmarks",
+      bookmarks: user.bookmarks 
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Error toggling bookmark" });
+  }
+};
+
+module.exports = { register, login, followUnfollowUser ,getUserProfile, savetoken, updatenotification, getnotificationsetting,logout, updateprofile, changePassword, toggleBookmark};

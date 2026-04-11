@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { register,login,followUnfollowUser,getUserProfile,savetoken,updatenotification,getnotificationsetting,logout,updateprofile,changePassword} = require('../controller/usercontroller');
+const { register,login,followUnfollowUser,getUserProfile,savetoken,updatenotification,getnotificationsetting,logout,updateprofile,changePassword,toggleBookmark} = require('../controller/usercontroller');
 const authmiddle = require('../middleware/authmiddle');
 const usermodel = require('../models/usermodel');
 const upload = require('../config/multer');
@@ -34,5 +34,6 @@ router.post('/logout',logout)
 router.put('/updateprofile',authmiddle,upload.single('profilepicture'),updateprofile)
 
 router.put('/change-password', authmiddle, changePassword);
+router.put('/bookmark/:id',authmiddle, toggleBookmark);
 
-module.exports = router;
+module.exports = router
