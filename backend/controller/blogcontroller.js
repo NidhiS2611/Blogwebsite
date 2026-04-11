@@ -218,9 +218,8 @@ const getFeedBlogs = async (req, res) => {
         : "https://via.placeholder.com/400x200?text=Blog",
         author: {
         name: b.author?.name || "Unknown",
-        profilePicture: b.author?.profilepicture
-          ? b.author.profilepicture
-          : "https://www.gravatar.com/avatar/00000000000000000000000000000000",
+        profilepicture: b.author?.profilepicture
+          
       },
       date: new Date(b.createdAt).toLocaleDateString("en-US", {
         day: "2-digit",
