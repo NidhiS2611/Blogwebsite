@@ -1,8 +1,10 @@
+
+
 import React, { memo, useCallback, useState, useEffect } from "react";
-import { Share2, Eye, Bookmark } from "lucide-react"; // ✅ Bookmark import kiya
+import { Share2, Eye, Bookmark } from "lucide-react"; 
 import { useNavigate } from "react-router-dom";
-import api from "../services/Axiosinstance"; // ✅ API instance import kiya
-import { useAuth } from "../context/Authcontext"; // ✅ User check karne ke liye
+import api from "../services/Axiosinstance"; 
+import { useAuth } from "../context/Authcontext"; 
 
 function PostCard({
   id,
@@ -14,15 +16,15 @@ function PostCard({
   views,
 }) {
   const navigate = useNavigate();
-  const { user } = useAuth(); // Auth context se user nikal lo
+  const { user } = useAuth(); 
   const [isBookmarked, setIsBookmarked] = useState(false);
 
-  /* ✅ Check if post is already bookmarked on load */
+  // ✅ Bookmark status check (Sirf tab chalega jab user ya id change ho)
   useEffect(() => {
-    if (user && user.bookmarks) {
+    if (user?.bookmarks && id) {
       setIsBookmarked(user.bookmarks.includes(id));
     }
-  }, [user, id]);
+  }, [user?.bookmarks, id]);
 
   /* ================= OPEN BLOG ================= */
   const goToBlog = useCallback(() => {
@@ -31,14 +33,17 @@ function PostCard({
 
   /* ================= TOGGLE BOOKMARK ================= */
   const handleBookmark = async (e) => {
-    e.stopPropagation(); // Card click event ko rokne ke liye
+    e.stopPropagation(); // 🔥 Card click ko rokne ke liye
     if (!user) return alert("Please login to bookmark posts");
 
     try {
-      // ✅ API CALL to user/bookmark/:id
+      // Toggle UI immediately for better UX
+      setIsBookmarked((prev) => !prev);
+      
       await api.post(`/user/bookmark/${id}`);
-      setIsBookmarked(!isBookmarked); // UI update
     } catch (err) {
+      // Reverse UI if API fails
+      setIsBookmarked((prev) => !prev);
       console.log("Bookmark Error:", err);
     }
   };
@@ -61,10 +66,10 @@ function PostCard({
         hover:border-neutral-700 transition relative
       "
     >
-      {/* 🔖 BOOKMARK ICON (TOP RIGHT) */}
+      {/* 🔖 BOOKMARK BUTTON (Top Right) */}
       <button 
         onClick={handleBookmark}
-        className="absolute top-2 right-2 z-10 p-2 rounded-full bg-black/40 hover:bg-black/60 transition"
+        className="absolute top-3 right-3 z-20 p-2 rounded-full bg-black/40 hover:bg-black/60 transition-all border border-transparent hover:border-neutral-700"
       >
         <Bookmark 
           size={18} 
@@ -72,50 +77,54 @@ function PostCard({
         />
       </button>
 
-      {/* MOBILE LAYOUT */}
-      <div className="flex gap-3 md:block">
+      {/* CARD CONTENT */}
+      <div className="flex gap-3 md:flex-col">
         {/* IMAGE */}
         {image && (
-          <img
-            src={image}
-            alt="blog"
-            className="w-24 h-24 md:w-full md:h-48 object-cover rounded-lg border border-neutral-800"
-          />
+          <div className="shrink-0 md:w-full">
+            <img
+              src={image}
+              alt="blog"
+              className="w-24 h-24 md:w-full md:h-44 object-cover rounded-lg border border-neutral-800 group-hover:opacity-80 transition"
+            />
+          </div>
         )}
 
-        {/* CONTENT */}
-        <div className="flex-1">
-          {/* AUTHOR */}
-          <div className="flex gap-3 items-center mt-2">
-            <img
-              src={authorProfile || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
-              className="w-8 h-8 rounded-full border border-neutral-700"
-              alt="author"
-            />
-            <div>
-              <p className="text-sm font-semibold text-white">
+        <div className="flex-1 flex flex-col justify-between">
+          <div>
+            {/* AUTHOR INFO */}
+            <div className="flex gap-2 items-center mb-2">
+              <img
+                src={authorProfile || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
+                className="w-6 h-6 rounded-full border border-neutral-700"
+                alt="author"
+              />
+              <span className="text-[11px] font-medium text-gray-300 truncate max-w-[100px]">
                 {author || "Unknown"}
-              </p>
-              <p className="text-[10px] text-gray-500">{date}</p>
+              </span>
+              <span className="text-[10px] text-gray-500">• {date}</span>
             </div>
+
+            {/* TITLE */}
+            <h3 className="text-gray-200 text-sm font-semibold line-clamp-2 leading-snug group-hover:text-violet-400 transition">
+              {title}
+            </h3>
           </div>
 
-          {/* TITLE */}
-          <p className="mt-2 text-gray-200 text-sm font-medium line-clamp-2">
-            {title}
-          </p>
-
           {/* VIEWS */}
-          <div className="flex items-center gap-1 mt-2 text-[11px] text-gray-500">
+          <div className="flex items-center gap-1 mt-3 text-[10px] text-gray-500 uppercase tracking-wider font-bold">
             <Eye size={12} />
-            <span>{views || 0} views</span>
+            <span>{views || 0} {views === 1 ? "view" : "views"}</span>
           </div>
         </div>
       </div>
 
-      {/* ACTIONS */}
-      <div className="flex justify-end mt-3 pt-3 border-t border-neutral-800 text-gray-400 text-xs">
-        <button onClick={shareOnWhatsApp} className="hover:text-white flex items-center gap-1 transition">
+      {/* SHARE ACTION */}
+      <div className="mt-4 pt-3 border-t border-neutral-800 flex justify-end">
+        <button 
+          onClick={shareOnWhatsApp} 
+          className="text-xs text-gray-500 hover:text-white flex items-center gap-1.5 transition"
+        >
           <Share2 size={14} />
           Share
         </button>
@@ -125,9 +134,6 @@ function PostCard({
 }
 
 export default memo(PostCard);
-
-
-
 
 
 
