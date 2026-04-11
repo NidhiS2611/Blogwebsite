@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 import Notificationlistener from "./component/Notificationlisner.jsx";
 import Homelayout from "./layout/Homelayout ";
 import AuthLanding from "./pages/Authlandingpage.jsx";
+import Bookmarks from "./pages/Bookmarks.jsx";
 
 // 🔥 Lazy Pages
 const Home = lazy(() => import("./pages/Home"));
@@ -14,6 +15,7 @@ const Createblog = lazy(() => import("./pages/Createblog"));
 const Explore = lazy(() => import("./pages/Explore"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Setting = lazy(() => import("./pages/Setting.jsx"));
+const Bookmarks = lazy(() => import("./pages/Bookmarks.jsx"));
 const Notificationsetting = lazy(() =>
   import("./pages/Notificationsetting.jsx")
 );
@@ -78,6 +80,7 @@ function App() {
               path="settings/account"
               element={<Accountsetting />}
             />
+            <Route path="bookmarks" element={<Bookmarks />} />
           </Route>
         </Routes>
       </Suspense>
