@@ -84,7 +84,7 @@ export default function Navbar() {
           <button onClick={() => setMobileProfileOpen((p) => !p)}>
             <img
               src={
-                user?.image ||
+                user?.profilepicture ||
                 "https://cdn-icons-png.flaticon.com/512/149/149071.png"
               }
               className="w-8 h-8 rounded-full object-cover"
@@ -187,7 +187,7 @@ export default function Navbar() {
           >
             <img
               src={
-                user?.image ||
+                user?.profilepicture ||
                 "https://cdn-icons-png.flaticon.com/512/149/149071.png"
               }
               className="w-9 h-9 rounded-full object-cover"
