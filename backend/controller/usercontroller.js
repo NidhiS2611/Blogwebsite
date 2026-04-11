@@ -8,7 +8,7 @@ const notifyOnFollow = require('../utility/notificationonfollow');
 const { trusted } = require('mongoose');
 const crypto = require('crypto');
 const otpModel = require('../models/otpmodel');
-const { sendmail } = require('../services/sendmail');
+const  sendmail  = require('../services/sendmail');
 
 
 const userschema = z.object({
