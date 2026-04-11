@@ -141,7 +141,7 @@ export default function Profile() {
       {/* BACK */}
       <div className="max-w-4xl mx-auto px-4 pt-4">
         <button
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/home")}
           className="flex items-center gap-2 text-violet-400 font-semibold text-sm"
         >
           <ArrowLeft size={16} /> Back

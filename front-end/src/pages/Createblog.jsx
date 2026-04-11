@@ -111,7 +111,7 @@ export default function CreateBlog() {
           <ArrowLeft size={18} /> Back
         </button>
 
-        <h1 className="text-2xl sm:text-4xl font-bold mb-2">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2">
           Create New Article
         </h1>
         <p className="text-gray-400 mb-8">
