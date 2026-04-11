@@ -13,7 +13,7 @@ export default function Bookmarks() {
       setError(null);
       
       // ✅ API Call to your saved blogs route
-      const res = await api.get("/user/saved-blogs");
+      const res = await api.get("/blog/saved-blogs");
       
       if (res.data.success) {
         setSavedBlogs(res.data.blogs || []);
