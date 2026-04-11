@@ -205,7 +205,7 @@ const getFeedBlogs = async (req, res) => {
       .sort({ createdAt: -1 })        // ✅ latest first
       .skip(skip)
       .limit(limit)
-      .populate("author", "name")
+      .populate("author", "name profilepicture") // only author name and profile picture
       .lean();
 
     const formatted = blogs.map((b) => ({
@@ -342,7 +342,7 @@ const getallBlogs = async (req, res) => {
   try {
     const blogs = await blogmodel.find()
 
-      .populate("author", "name") // only author name
+      .populate("author", "name profilepicture") // only author name and profile picture
 
 
     const formatted = blogs.map((b, index) => ({
