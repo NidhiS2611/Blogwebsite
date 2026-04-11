@@ -250,7 +250,7 @@ const handleFollow = async () => {
         </div>
         <div className="text-gray-400 text-xs sm:text-sm md:text-base mt-1">{post.excerpt}</div>
 
-     <div className="prose prose-invert max-w-none mt-4 text-xs sm:text-base md:text-md leading-relaxed">
+     <div className="prose prose-invert max-w-none mt-4 text-sm sm:text-base md:text-md leading-relaxed">
   <ReactMarkdown remarkPlugins={[remarkGfm]}>
     {post.content?.replace(/\n/g, "\n\n")}
   </ReactMarkdown>
