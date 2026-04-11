@@ -119,7 +119,7 @@ export default function Forgotpasswordflow() {
               onClick={() => window.location.href = "/login"}
               className="text-white underline"
             >
-              Sign in
+              Back to Login
             </button>
           </p>
         </div>
