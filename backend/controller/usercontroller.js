@@ -6,6 +6,9 @@ const { z } = require('zod');
 const blog = require('../models/blogmodel');
 const notifyOnFollow = require('../utility/notificationonfollow');  
 const { trusted } = require('mongoose');
+const crypto = require('crypto');
+const otpModel = require('../models/otpmodel');
+const { sendmail } = require('../services/sendmail');
 
 
 const userschema = z.object({
@@ -93,6 +96,14 @@ const login = async (req, res) => {
     if (!match) {
       return res.status(400).json({ message: 'invalid credentials' })
     }
+
+    if (user.isActive === false) {
+      user.isActive = true;
+      // Uske purane blogs ko wapas public (true) kar do
+      await blogmodel.updateMany({ author: user.id }, { isPublished: true });
+      await user.save();
+      console.log(`User ${user.email} reactivated!`);
+    }
     const token = await generatetoken(user)
     res.cookie('token', token, {
       httpOnly: true,
@@ -107,7 +118,8 @@ const login = async (req, res) => {
       message: 'login successful', token, user: {
         
         name: user.name,
-        email: user.email
+        email: user.email,
+        isActive:user.isActive
       }
     })
   }
@@ -406,4 +418,133 @@ const toggleBookmark = async (req, res) => {
   }
 };
 
-module.exports = { register, login, followUnfollowUser ,getUserProfile, savetoken, updatenotification, getnotificationsetting,logout, updateprofile, changePassword, toggleBookmark};
+// usercontroller.js
+const deactivateAccount = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        // 1. User ko inactive mark karo
+        await usermodel.findByIdAndUpdate(userId, { isActive: false });
+
+        // 2. Uske saare blogs ko 'draft' ya 'hidden' kar do
+        // Taaki public feed se hat jayein par delete na hon
+        await blogmodel.updateMany({ author: userId }, { isPublished: false });
+
+        res.status(200).json({ success: true, message: "Account deactivated and blogs hidden." });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+
+// usercontroller.js
+const deleteAccountPermanently = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        // 1. User ke saare blogs delete karo (Database cleaning)
+        const deletedBlogs = await blogmodel.deleteMany({ author: userId });
+        console.log(`${deletedBlogs.deletedCount} blogs deleted for user: ${userId}`);
+
+        // 2. User ki profile delete karo
+        const deletedUser = await usermodel.findByIdAndDelete(userId);
+
+        if (!deletedUser) {
+            return res.status(404).json({ message: "User nahi mila" });
+        }
+
+        // 3. User ki profile image agar Cloudinary/Server par hai toh wahan se bhi hata dena
+        
+        res.status(200).json({ 
+            success: true, 
+            message: "Account aur aapke saare blogs hamesha ke liye delete ho gaye hain." 
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const forgotpassword = async (req, res) => {            
+    // Implement forgot password logic here 
+    try{
+        const { email } = req.body; 
+        const user = await AuthUser.findOne({   
+            email
+        });
+        if (!user) {    
+            return res.status(400).json({       
+                message: "User with this email does not exist"      
+            });     
+        }
+
+            const otp = Math.floor(100000 + Math.random() * 900000);
+            const otpHash = crypto.createHash("sha256").update(otp.toString()).digest("hex");
+           const newotp= new otpModel({ email, otpHash }); 
+           await newotp.save();
+         const message = `Your OTP for password reset is ${otp}. It will expire in 5 minutes.`;
+        await sendmail(email, "Password Reset OTP", message);
+        res.status(200).json({ message: "OTP sent to email" });
+    
+
+
+    }
+    catch(e){
+        res.status(400).json({ message: "Invalid data" });
+        console.log(e);
+    }
+}
+
+
+const verifyotp = async (req, res) => {
+    try{
+        const { email, otp } = req.body;
+        const otpHash = crypto.createHash("sha256").update(otp.toString()).digest("hex");
+        const otpRecord = await otpModel.findOne({ email, otpHash });
+
+        if (!otpRecord || otpRecord.createdAt < new Date(Date.now() - 5 * 60 * 1000)) {
+            return res.status(400).json({ message: "Invalid OTP" });
+        }
+
+        // OTP is valid, proceed with password reset logic
+        // ...
+        res.status(200).json({ message: "OTP verified successfully" });
+
+    }
+    catch(e){
+        res.status(400).json({ message: "Invalid data" });
+        console.log(e);
+    }
+
+}
+
+
+const resetpassword = async (req, res) => {
+    try{
+        const { email, newPassword, otp } = req.body;
+        if (!otp) {
+            return res.status(400).json({ message: "OTP is required" });
+        }
+            const otpHash = crypto.createHash("sha256").update(otp.toString()).digest("hex");   
+        const otpRecord = await otpModel.findOne({ email, otpHash });
+
+        if (!otpRecord || otpRecord.createdAt < new Date(Date.now() - 5 * 60 * 1000)) {
+            return res.status(400).json({ message: "Invalid OTP" });
+        }
+
+        const user = await AuthUser.findOne({ email });
+        if (!user) {
+            return res.status(400).json({ message: "User with this email does not exist" });
+        }   
+        const hash = await bcrypt.hash(newPassword, 10);
+        user.password = hash;
+        await user.save();
+        await otpModel.deleteMany({ email });
+        res.status(200).json({ message: "Password reset successfully" });
+
+
+    }
+    catch(e){       
+        res.status(400).json({ message: "Invalid data" });
+        console.log(e);
+    }}
+module.exports = { register, login, followUnfollowUser ,getUserProfile, savetoken, updatenotification, getnotificationsetting,logout, updateprofile, changePassword, toggleBookmark, deactivateAccount, deleteAccountPermanently, forgotpassword, verifyotp, resetpassword  };

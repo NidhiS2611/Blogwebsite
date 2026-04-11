@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 import Notificationlistener from "./component/Notificationlisner.jsx";
 import Homelayout from "./layout/Homelayout ";
 import AuthLanding from "./pages/Authlandingpage.jsx";
+import Forgotpasswordflow from "./pages/Forgotpasswordflow.js";
 
 
 // 🔥 Lazy Pages
@@ -62,6 +63,8 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/notifications" element={<Notificationpage />} />
           <Route path="/" element={<AuthLanding />} />
+          <Route path="/forgot-password" element={<Forgotpasswordflow />} />
+
           
           {/* Layout */}
           <Route element={<Homelayout />}>

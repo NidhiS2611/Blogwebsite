@@ -1,92 +1,102 @@
 const mongoose = require('mongoose');
+const { boolean } = require('zod');
 
 
-const  userschema = new mongoose.Schema({
-    name:{
-        type:String,
-        required:true
+const userschema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: true
     },
-    email:{
-        type:String,
-        required:true
+    email: {
+        type: String,
+        required: true
     },
-    password:{
-        type:String,
-        required:true
+    password: {
+        type: String,
+        required: true
     },
-   
-    profilepicture:{
-        type:String,
-        default:'default.jpg'
+
+    profilepicture: {
+        type: String,
+        default: 'default.jpg'
     },
-    bio:{
-        type:String,
-        default:''
+    bio: {
+        type: String,
+        default: ''
     },
-    followers:[
+    followers: [
         {
-            type:mongoose.Schema.Types.ObjectId,
-            ref:'user'
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'user'
         }
     ],
-    following:[
+    following: [
         {
-        type:mongoose.Schema.Types.ObjectId,
-        ref:'user'
-    }],
-    Blog:[
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'user'
+        }],
+    Blog: [
         {
-            type:mongoose.Schema.Types.ObjectId,
-            ref:'blog'
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'blog'
         }
     ],
 
-    comments:[
+    comments: [
         {
-            type:mongoose.Schema.Types.ObjectId,
-            ref:'comment'
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'comment'
         }
     ],
     notificationSettings: {
-      blog: {
-        type: Boolean,
-        default: false, // blog publish notification
-      },
-      follow: {
-        type: Boolean,
-        default: false,
-      },
-      like: {
-        type: Boolean,
-        default: false,
-      },
-      comment: {
-        type: Boolean,
-        default: false,
-      },
+        blog: {
+            type: Boolean,
+            default: false, // blog publish notification
+        },
+        follow: {
+            type: Boolean,
+            default: false,
+        },
+        like: {
+            type: Boolean,
+            default: false,
+        },
+        comment: {
+            type: Boolean,
+            default: false,
+        },
     },
-     fcmToken: {
-      type: String,
-      default: null,
+    fcmToken: {
+        type: String,
+        default: null,
     },
-      created_at:{
-        type:Date,
-        default:Date.now
-      },
-      // ... tumhara baki schema
+    created_at: {
+        type: Date,
+        default: Date.now
+    },
+    // ... tumhara baki schema
     bookmarks: [
         {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'blog' // Ye blog model ko point karega
         }
     ],
-
-
-
-
+    isActive: {
+        type: Boolean, // Yahan 'type' likhna zaruri hai
+        default: true
+    },
+    googleId: {
+        type: String,
+        unique: true,
+        sparse: true // Taaki null values par conflict na ho
+    },
+    authMethod: {
+        type: String,
+        enum: ['manual', 'google'],
+        default: 'manual' // By default hum manual maan ke chalenge
+    }
 },
-  
-{ timestamps: true }
+    { timestamps: true }
 )
-const usermodel = mongoose.model('user',userschema)
+const usermodel = mongoose.model('user', userschema)
 module.exports = usermodel

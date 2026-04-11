@@ -36,6 +36,10 @@ category:{
  views: [
     { type: mongoose.Schema.Types.ObjectId, ref: "user" }
   ],
+  isPublished: {
+        type: Boolean,
+        default: true // Taaki naya blog automatic sabko dikhe
+    }
 
 
 
