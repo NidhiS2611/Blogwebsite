@@ -27,7 +27,6 @@ export default function Forgotpasswordflow() {
   const resetPass = async (e) => {
     e.preventDefault();
     try {
-      // Backend par check karna password hash ho raha hai ya nahi
       await api.post("/user/reset-password", { email, newPassword, otp });
       alert("Password badal gaya! Login karle ab.");
       window.location.href = "/login";
@@ -35,93 +34,94 @@ export default function Forgotpasswordflow() {
   };
 
   return (
-    // Background ko dark gradient kar diya hai
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4 font-sans">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-black flex items-center justify-center px-4 font-sans">
+      <div className="w-full max-w-sm mx-auto">
         
-        {/* Logo Section */}
-        <div className="text-center mb-8">
-          <div className="inline-block p-4 bg-zinc-900 border border-zinc-800 rounded-2xl mb-4 shadow-xl">
-             {/* Yahan apna logo ya text dalo */}
-            <h2 className="text-2xl font-bold text-purple-500">BS</h2>
-          </div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">BlogSphere</h1>
-          <p className="text-zinc-400 mt-2">
-            {step === 1 && "Password bhool gaye? Koi baat nahi!"}
-            {step === 2 && "OTP check karo bhai"}
-            {step === 3 && "Naya password set karo"}
+        {/* HEADER - Login Screen jaisa style */}
+        <div className="mb-6 text-left">
+          <h1 className="text-2xl font-semibold tracking-tight text-white">
+            {step === 1 && "Reset Password"}
+            {step === 2 && "Verification"}
+            {step === 3 && "Secure Account"}
+          </h1>
+          <p className="text-sm text-gray-400 mt-1">
+            {step === 1 && "Enter your email to get OTP"}
+            {step === 2 && "Enter 6-digit code sent to your mail"}
+            {step === 3 && "Set a new strong password"}
           </p>
         </div>
 
-        {/* Main Card (Black theme) */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-3xl shadow-2xl p-8">
+        {/* Main Card - Login Screen se matching (Pitch Black) */}
+        <div className="bg-black border border-neutral-800 rounded-2xl px-6 py-7 sm:px-7 sm:py-8">
           
           {/* STEP 1: ENTER EMAIL */}
           {step === 1 && (
-            <form onSubmit={sendOtp}>
-              <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-3">
-                <Mail className="h-5 w-5 text-purple-500" /> Forgot Password
-              </h2>
-              <input
-                type="email"
-                required
-                placeholder="Registered email dalo"
-                className="w-full mb-6 px-4 py-3 bg-zinc-800 border border-zinc-700 text-white rounded-xl focus:ring-2 focus:ring-purple-600 focus:border-transparent outline-none transition-all"
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 transition-all text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-purple-900/20">
-                Send OTP <ArrowRight className="h-4 w-4" />
+            <form onSubmit={sendOtp} className="space-y-4">
+              <div className="relative">
+                <Mail className="absolute left-3 top-3.5 w-4 h-4 text-gray-500" />
+                <input
+                  type="email"
+                  required
+                  placeholder="Email"
+                  className="w-full pl-10 py-3 bg-neutral-900 text-white rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-violet-600"
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+              <button type="submit" className="w-full bg-violet-600 hover:bg-violet-700 py-3 rounded-full text-sm font-medium transition text-white">
+                Send OTP
               </button>
             </form>
           )}
 
           {/* STEP 2: VERIFY OTP */}
           {step === 2 && (
-            <form onSubmit={verifyOtp}>
-              <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-3">
-                <ShieldCheck className="h-5 w-5 text-purple-500" /> Verify OTP
-              </h2>
-              <p className="text-xs text-zinc-500 mb-4">OTP sent to: <span className="text-purple-400">{email}</span></p>
-              <input
-                type="text"
-                required
-                maxLength="6"
-                placeholder="000000"
-                className="w-full mb-6 px-4 py-3 bg-zinc-800 border border-zinc-700 text-purple-500 rounded-xl focus:ring-2 focus:ring-purple-600 focus:border-transparent outline-none font-bold text-center text-3xl tracking-[8px]"
-                onChange={(e) => setOtp(e.target.value)}
-              />
-              <button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 transition-all text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-purple-900/20">
-                Verify OTP <ArrowRight className="h-4 w-4" />
+            <form onSubmit={verifyOtp} className="space-y-4">
+              <div className="relative">
+                <ShieldCheck className="absolute left-3 top-3.5 w-4 h-4 text-gray-500" />
+                <input
+                  type="text"
+                  required
+                  maxLength="6"
+                  placeholder="Enter OTP"
+                  className="w-full pl-10 py-3 bg-neutral-900 text-white rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-violet-600 tracking-[4px] font-bold"
+                  onChange={(e) => setOtp(e.target.value)}
+                />
+              </div>
+              <button type="submit" className="w-full bg-violet-600 hover:bg-violet-700 py-3 rounded-full text-sm font-medium transition text-white">
+                Verify OTP
               </button>
             </form>
           )}
 
           {/* STEP 3: RESET PASSWORD */}
           {step === 3 && (
-            <form onSubmit={resetPass}>
-              <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-3">
-                <Lock className="h-5 w-5 text-purple-500" /> Reset Password
-              </h2>
-              <input
-                type="password"
-                required
-                placeholder="Naya password dalo"
-                className="w-full mb-6 px-4 py-3 bg-zinc-800 border border-zinc-700 text-white rounded-xl focus:ring-2 focus:ring-purple-600 focus:border-transparent outline-none transition-all"
-                onChange={(e) => setNewPassword(e.target.value)}
-              />
-              <button type="submit" className="w-full bg-white hover:bg-zinc-200 transition-all text-black font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-xl">
-                Update Password <ShieldCheck className="h-4 w-4" />
+            <form onSubmit={resetPass} className="space-y-4">
+              <div className="relative">
+                <Lock className="absolute left-3 top-3.5 w-4 h-4 text-gray-500" />
+                <input
+                  type="password"
+                  required
+                  placeholder="New Password"
+                  className="w-full pl-10 py-3 bg-neutral-900 text-white rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-violet-600"
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+              </div>
+              <button type="submit" className="w-full bg-violet-600 hover:bg-violet-700 py-3 rounded-full text-sm font-medium transition text-white">
+                Update Password
               </button>
             </form>
           )}
 
-          {/* Back to Login */}
-          <div className="mt-8 text-center border-t border-zinc-800 pt-6">
-            <a href="/login" className="text-sm text-zinc-500 hover:text-purple-400 transition-colors font-medium">
-              ← Back to Login
-            </a>
-          </div>
-
+          {/* FOOTER - Login jaisa logic */}
+          <p className="text-center mt-6 text-sm text-gray-400">
+            Remembered?{" "}
+            <button
+              onClick={() => window.location.href = "/login"}
+              className="text-white underline"
+            >
+              Sign in
+            </button>
+          </p>
         </div>
       </div>
     </div>
