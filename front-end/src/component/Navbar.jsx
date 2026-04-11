@@ -95,16 +95,7 @@ export default function Navbar() {
                 <User size={14} /> Profile
               </button>
 
-              {/* ✅ Profile Dropdown mein bhi Bookmarks add kar diya */}
-              <button
-                onClick={() => {
-                  navigate("/bookmarks");
-                  setMobileProfileOpen(false);
-                }}
-                className="w-full px-4 py-2 flex gap-2 hover:bg-neutral-800 text-gray-300"
-              >
-                <BookmarkCheck size={14} /> Saved
-              </button>
+            
 
               <button
                 onClick={() => {
@@ -182,10 +173,7 @@ export default function Navbar() {
                 <User size={14} /> Profile
               </button>
               
-              {/* Desktop Dropdown mein Bookmarks */}
-              <button onClick={() => navigate("/bookmarks")} className="w-full px-4 py-2 flex gap-2 hover:bg-neutral-800 text-gray-300">
-                <BookmarkCheck size={14} /> Saved
-              </button>
+            
 
               <button onClick={() => navigate("/settings")} className="w-full px-4 py-2 flex gap-2 hover:bg-neutral-800 text-gray-300">
                 <Settings size={14} /> Settings
