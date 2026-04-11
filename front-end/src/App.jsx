@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 import Notificationlistener from "./component/Notificationlisner.jsx";
 import Homelayout from "./layout/Homelayout ";
 import AuthLanding from "./pages/Authlandingpage.jsx";
-import Forgotpasswordflow from "./pages/Forgotpasswordflow.js";
+import Forgotpasswordflow from "./pages/Forgotpasswordflow.jsx";
 
 
 // 🔥 Lazy Pages
