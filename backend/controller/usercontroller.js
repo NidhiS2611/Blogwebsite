@@ -468,7 +468,7 @@ const forgotpassword = async (req, res) => {
     // Implement forgot password logic here 
     try{
         const { email } = req.body; 
-        const user = await AuthUser.findOne({   
+        const user = await usermodel.findOne({   
             email
         });
         if (!user) {    
@@ -531,7 +531,7 @@ const resetpassword = async (req, res) => {
             return res.status(400).json({ message: "Invalid OTP" });
         }
 
-        const user = await AuthUser.findOne({ email });
+        const user = await usermodel.findOne({ email });
         if (!user) {
             return res.status(400).json({ message: "User with this email does not exist" });
         }   

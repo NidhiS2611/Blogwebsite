@@ -11,7 +11,9 @@ export default function Forgotpasswordflow() {
   const sendOtp = async (e) => {
     e.preventDefault();
     try {
-      await api.post("/user/forgot-password", { email });
+      await api.post("/user/forgot-password", { email }
+        
+      );
       setStep(2);
     } catch (err) { alert("Email nahi mila bhai!"); }
   };
