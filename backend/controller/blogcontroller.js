@@ -356,7 +356,7 @@ const getallBlogs = async (req, res) => {
         : "https://via.placeholder.com/400x200?text=Blog",
       author: {
         name: b.author?.name || "Unknown",
-        profilePicture: b.author?.profilepicture},
+        profilepicture: b.author?.profilepicture},
          
       views: b.views || 0,
         

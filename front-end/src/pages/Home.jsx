@@ -158,7 +158,7 @@ export default function Home() {
                     authorProfile={blog.author?.profilepicture}
                     date={blog.date}
                     readTime={blog.readTime || "5 min"}
-                      views={blog.views?.length || 0}   // ✅ PASS VIEWS COUNT
+                    views={blog.views?.length || 0}   // ✅ PASS VIEWS COUNT
                   />
                 ))}
               </div>
