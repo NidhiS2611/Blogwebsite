@@ -41,6 +41,7 @@ const createblog = async (req, res) => {
     res.status(201).json({ msg: "Blog created successfully", blog });
   } catch (error) {
     console.log(error);
+    res.status(500).json({ msg: "Server error" ,error:error.message});
   }
 }
 const toggleLike = async (req, res) => {
