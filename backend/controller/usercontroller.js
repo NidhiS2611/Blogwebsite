@@ -427,7 +427,7 @@ const deactivateAccount = async (req, res) => {
         await usermodel.findByIdAndUpdate(userId, { isActive: false });
 
         // 2. Blogs hide karo
-        await blogmodel.updateMany({ author: userId }, { isPublished: false });
+        await blog.updateMany({ author: userId }, { isPublished: false });
 
         // 3. COOKIE CLEAR KARO (Vercel-Render Specific)
         res.clearCookie("token", {
@@ -454,7 +454,7 @@ const deleteAccountPermanently = async (req, res) => {
         const userId = req.user.id;
 
         // 1. User ke saare blogs delete karo (Database cleaning)
-        const deletedBlogs = await blogmodel.deleteMany({ author: userId });
+        const deletedBlogs = await blog.deleteMany({ author: userId });
         console.log(`${deletedBlogs.deletedCount} blogs deleted for user: ${userId}`);
 
         // 2. User ki profile delete karo
