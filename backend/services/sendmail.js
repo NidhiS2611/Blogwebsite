@@ -6,7 +6,10 @@ const sendmail = async (to, subject, text) => {
         console.log('Setting up transporter with password:', process.env.APP_PASSWORD ? '******' : 'No password set');
      const transporter = nodemailler.createTransport({
             // 'service' ko hata kar manual host/port dena Render par better hai
-      service: "gmail",
+     host: "smtp.gmail.com",
+      port: 587,        // ✅ FIXED
+      secure: false,    // ✅ FIXED
+      family: 4, 
        // 🔥 important
       auth: {
         user: process.env.APP_EMAIL,
