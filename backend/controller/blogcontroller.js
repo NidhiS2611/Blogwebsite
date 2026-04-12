@@ -51,7 +51,7 @@ const createblog = async (req, res) => {
     });
 
   } catch (error) {
-    console.log(error);
+    console.log("ERROR:", error.message); 
     return res.status(500).json({
       msg: "Server error",
       error: error.message,
