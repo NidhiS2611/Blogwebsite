@@ -1,5 +1,6 @@
 const sendmail = async (to, subject, text) => {
     try {
+        console.log('Attempting to send email via API... 📧', process.env.BREVO_KEY);
         // Hum fetch use kar rahe hain jo Node.js mein built-in hota hai
         const response = await fetch('https://api.brevo.com/v3/smtp/email', {
             method: 'POST',
