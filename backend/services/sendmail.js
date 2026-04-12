@@ -1,31 +1,35 @@
-const nodemailer = require('nodemailer');
-
 const sendmail = async (to, subject, text) => {
     try {
-        const transporter = nodemailer.createTransport({
-            // Brevo ka dedicated SMTP server
-            host: 'smtp-relay.brevo.com',
-            port: 587,
-            secure: false, // TLS ke liye false
-            auth: {
-                // Brevo login email aur SMTP Key yahan aayenge
-                user: process.env.BREVO_USER, 
-                pass: process.env.BREVO_KEY   
-            }
+        // Hum fetch use kar rahe hain jo Node.js mein built-in hota hai
+        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+                'accept': 'application/json',
+                'api-key': process.env.BREVO_KEY, // Teri wahi SMTP key yahan API key ka kaam karegi
+                'content-type': 'application/json'
+            },
+            body: JSON.stringify({
+                sender: { 
+                    name: "Blog Website", 
+                    email: process.env.BREVO_USER // Tera verified email
+                },
+                to: [{ email: to }],
+                subject: subject,
+                textContent: text
+            })
         });
 
-        const mailOptions = {
-            from: process.env.BREVO_USER, // Jo email Brevo par verify kiya
-            to: to,      // User ka email (Recruiter ya koi bhi)
-            subject: subject,
-            text: text
-        };
+        const data = await response.json();
 
-        const info = await transporter.sendMail(mailOptions);
-        console.log('Email sent via Brevo ✅:', info.messageId);
-        return info;
+        if (!response.ok) {
+            console.error('Brevo API Error Details ❌:', data);
+            throw new Error(data.message || 'Email sending failed');
+        }
+
+        console.log('Email sent successfully via API ✅', data.messageId || '');
+        return data;
     } catch (error) {
-        console.error('Brevo Error ❌:', error);
+        console.error('Final API Error ❌:', error.message);
         throw error;
     }           
 }
