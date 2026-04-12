@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { User, Bell } from "lucide-react";
+// Trash2 icon add kar lena lucide-react se
+import { User, Bell, Trash2 } from "lucide-react"; 
 
 const Setting = () => {
   return (
@@ -18,9 +19,7 @@ const Setting = () => {
           <div className="space-y-4">
             <Link
               to="/settings/account"
-              className="flex items-center gap-3 py-2
-                         text-sm md:text-base
-                         text-gray-300 hover:text-violet-400 transition"
+              className="flex items-center gap-3 py-2 text-sm md:text-base text-gray-300 hover:text-violet-400 transition"
             >
               <User size={18} />
               Account Settings
@@ -30,12 +29,21 @@ const Setting = () => {
 
             <Link
               to="/settings/notifications"
-              className="flex items-center gap-3 py-2
-                         text-sm md:text-base
-                         text-gray-300 hover:text-violet-400 transition"
+              className="flex items-center gap-3 py-2 text-sm md:text-base text-gray-300 hover:text-violet-400 transition"
             >
               <Bell size={18} />
               Notification Settings
+            </Link>
+
+            <hr className="border-neutral-800" />
+
+            {/* --- DANGER ZONE LINK ADDED HERE --- */}
+            <Link
+              to="/settings/danger-zone"
+              className="flex items-center gap-3 py-2 text-sm md:text-base text-rose-500 hover:text-rose-400 transition font-medium"
+            >
+              <Trash2 size={18} />
+              Danger Zone
             </Link>
 
             <hr className="border-neutral-800" />

@@ -120,7 +120,7 @@ export default function Login() {
           Don’t have an account?{" "}
           <button
             onClick={() => navigate("/signup")}
-            className="text-white underline"
+            className="text-white "
           >
             Create account
           </button>

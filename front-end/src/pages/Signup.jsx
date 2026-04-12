@@ -101,7 +101,7 @@ export default function Signup() {
         {/* FOOTER */}
         <p className="text-center mt-6 text-sm text-gray-400">
           Already have an account?{" "}
-          <Link to="/login" className="text-white underline">
+          <Link to="/login" className="text-white ">
             Sign in
           </Link>
         </p>
