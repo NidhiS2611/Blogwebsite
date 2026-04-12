@@ -6,7 +6,7 @@ const sendmail = async (to, subject, text) => {
             method: 'POST',
             headers: {
                 'accept': 'application/json',
-                'api-key': process.env.BREVO_KEY, // Teri wahi SMTP key yahan API key ka kaam karegi
+                'api-key': process.env.BREVO_KEY.trim(), // Teri wahi SMTP key yahan API key ka kaam karegi
                 'content-type': 'application/json'
             },
             body: JSON.stringify({
