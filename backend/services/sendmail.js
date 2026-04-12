@@ -4,7 +4,7 @@ const sendmail = async (to, subject, text) => {
     try {
      const transporter = nodemailler.createTransport({
             // 'service' ko hata kar manual host/port dena Render par better hai
-      host: "gmail",
+      service: "gmail",
        // 🔥 important
       auth: {
         user: process.env.APP_EMAIL,
