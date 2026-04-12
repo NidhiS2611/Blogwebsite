@@ -206,7 +206,7 @@ const handleFollow = async () => {
     return <div className="text-center mt-20 text-gray-400">Not Found</div>;
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className=" bg-black text-white">
       {/* HERO */}
       <section className="h-40 sm:h-64 md:h-96">
         <img
