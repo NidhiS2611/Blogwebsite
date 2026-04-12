@@ -40,7 +40,7 @@ const Setting = () => {
             {/* --- DANGER ZONE LINK ADDED HERE --- */}
             <Link
               to="/settings/danger-zone"
-              className="flex items-center gap-3 py-2 text-sm md:text-base text-rose-500 hover:text-rose-400 transition font-medium"
+              className="flex items-center gap-3 py-2 text-sm md:text-base text-gray-300 hover:text-violet-400 transition font-medium"
             >
               <Trash2 size={18} />
               Danger Zone

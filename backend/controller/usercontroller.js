@@ -423,14 +423,25 @@ const deactivateAccount = async (req, res) => {
     try {
         const userId = req.user.id;
 
-        // 1. User ko inactive mark karo
+        // 1. User inactive mark karo
         await usermodel.findByIdAndUpdate(userId, { isActive: false });
 
-        // 2. Uske saare blogs ko 'draft' ya 'hidden' kar do
-        // Taaki public feed se hat jayein par delete na hon
+        // 2. Blogs hide karo
         await blogmodel.updateMany({ author: userId }, { isPublished: false });
 
-        res.status(200).json({ success: true, message: "Account deactivated and blogs hidden." });
+        // 3. COOKIE CLEAR KARO (Vercel-Render Specific)
+        res.clearCookie("token", {
+            httpOnly: true,
+            secure: true,      // Vercel/Render dono HTTPS hain, toh ye TRUE hona chahiye
+            sameSite: "none",  // Cross-site ke liye 'none' compulsory hai
+            path: "/",
+        });
+
+        res.status(200).json({ 
+            success: true, 
+            message: "Account deactivated and logged out from Vercel ✅" 
+        });
+
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
