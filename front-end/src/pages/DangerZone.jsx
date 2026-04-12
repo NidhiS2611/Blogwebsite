@@ -3,6 +3,7 @@ import { Trash2, Power, ArrowLeft, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import ConfirmationModal from "../component/ConfirmationModal";
+import api from "../services/Axiosinstance"
 
 const DangerZone = () => {
   const navigate = useNavigate();
@@ -16,8 +17,8 @@ const DangerZone = () => {
     setLoading(true);
     try {
       const url = modalConfig.type === "deactivate" 
-        ? "/user/deactivate" 
-        : "/user/delete-account";
+        ? "api/user/deactivate" 
+        : "api/user/delete-account";
 
       const method = modalConfig.type === "deactivate" ? "put" : "delete";
       const response = await axios[method](url);
