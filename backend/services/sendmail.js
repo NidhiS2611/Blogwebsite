@@ -3,20 +3,24 @@ const nodemailler = require('nodemailer');
 const sendmail = async (to, subject, text) => {
     try {
         const transporter = nodemailler.createTransport({
-            // service: 'gmail' ki jagah host/port manual dena Render par better hai
-            host: 'smtp.gmail.com',
-            port: 465, 
-            secure: true, // Port 465 ke liye true
-            auth: {
-                user: process.env.APP_EMAIL,
-                pass: process.env.APP_PASSWORD // Tera 16-digit App Password
-            },
-            // Ye wala part connection timeout fix karne mein help karta hai
-            tls: {
-                rejectUnauthorized: false
-            },
-            connectionTimeout: 10000, // 10 seconds wait karega
-        });
+    // 'smtp.gmail.com' ki jagah direct IP use karne se IPv6 bypass ho jata hai
+    // Ya fir hum family: 4 option add karenge
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    service: 'gmail', // Service use karne se Nodemailer internally manage kar leta hai
+    auth: {
+        user: process.env.APP_EMAIL,
+        pass: process.env.APP_PASSWORD
+    },
+    // YE VALA PART IMPORTANT HAI
+    tls: {
+        rejectUnauthorized: false
+    },
+    // Force IPv4
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+});
 
         const mailOptions = {
             from: process.env.APP_EMAIL,
