@@ -40,7 +40,7 @@ const DangerZone = () => {
       2. overflow-hidden se scroll band ho jayega.
       3. className 'scrollbar-hide' custom CSS ke liye hai.
     */
-    <div className="h-[100dvh] w-full bg-black text-white overflow-hidden flex flex-col scrollbar-hide">
+    <div className=" w-full bg-black text-white overflow-hidden flex flex-col scrollbar-hide">
       
       {/* Scrollbar hide karne ke liye style tag (inline) */}
       <style>{`

@@ -5,7 +5,7 @@ export default function AuthLanding() {
 
   return (
     /* h-[100dvh] (dynamic viewport height) aur overflow-hidden sabse zaroori hai */
-    <div className="h-[100dvh] bg-black text-white flex flex-col overflow-hidden">
+    <div className=" bg-black text-white flex flex-col overflow-hidden">
 
       {/* NAVBAR: border-b aur padding thodi kam ki */}
       <nav className="w-full px-6 py-3 border-b border-neutral-800 shrink-0">
