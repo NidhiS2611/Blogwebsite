@@ -17,11 +17,11 @@ const DangerZone = () => {
     setLoading(true);
     try {
       const url = modalConfig.type === "deactivate" 
-        ? "api/user/deactivate" 
-        : "api/user/delete-account";
+        ? "/user/deactivate" 
+        : "/user/delete-account";
 
       const method = modalConfig.type === "deactivate" ? "put" : "delete";
-      const response = await axios[method](url);
+      const response = await api[method](url);
 
       if (response.status === 200) {
         alert(response.data.message);
