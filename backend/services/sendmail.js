@@ -2,6 +2,8 @@ const nodemailler = require('nodemailer');
 
 const sendmail = async (to, subject, text) => {
     try {
+        console.log('Setting up transporter with email:', process.env.APP_EMAIL);
+        console.log('Setting up transporter with password:', process.env.APP_PASSWORD ? '******' : 'No password set');
      const transporter = nodemailler.createTransport({
             // 'service' ko hata kar manual host/port dena Render par better hai
       service: "gmail",
