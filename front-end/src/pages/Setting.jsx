@@ -4,7 +4,7 @@ import { User, Bell, Trash2 } from "lucide-react";
 
 const Setting = () => {
   return (
-    <div className="min-h-screen bg-black py-10 text-white">
+    <div className=" bg-black py-10 text-white">
       <div className="max-w-5xl mx-auto px-4">
 
         {/* Page Title */}
