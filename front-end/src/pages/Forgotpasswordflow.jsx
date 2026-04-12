@@ -15,7 +15,7 @@ export default function Forgotpasswordflow() {
         
       );
       setStep(2);
-    } catch (err) { alert("Email nahi mila bhai!"); }
+    } catch (err) { alert("Email is not registered!"); }
   };
 
   const verifyOtp = async (e) => {
@@ -23,16 +23,16 @@ export default function Forgotpasswordflow() {
     try {
       await api.post("/user/verify-otp", { email, otp });
       setStep(3);
-    } catch (err) { alert("Galat OTP hai!"); }
+    } catch (err) { alert("Invalid OTP!"); }
   };
 
   const resetPass = async (e) => {
     e.preventDefault();
     try {
       await api.post("/user/reset-password", { email, newPassword, otp });
-      alert("Password badal gaya! Login karle ab.");
+      alert("Password reset successfully!");
       window.location.href = "/login";
-    } catch (err) { alert("Kuch gadbad ho gayi!"); }
+    } catch (err) { alert("Failed to reset password!"); }
   };
 
   return (
@@ -119,9 +119,9 @@ export default function Forgotpasswordflow() {
             Remembered?{" "}
             <button
               onClick={() => window.location.href = "/login"}
-              className="text-white underline"
+              className="text-white "
             >
-              ← Back to Login
+               Login
             </button>
           </p>
         </div>
