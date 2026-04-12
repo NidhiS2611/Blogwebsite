@@ -12,6 +12,7 @@ const createblog = async (req, res) => {
     }
 
     const userid = req.user.id;
+    console.log("Creating blog for user:", userid);
 
     const { title, content, excerpt, category } = req.body;
     const media = req.file?.path || "default.jpg";
@@ -42,7 +43,7 @@ const createblog = async (req, res) => {
     try {
       await notifyOnNewBlog({ blogId: blog._id, blogOwnerId: userid });
     } catch (err) {
-      console.log("Notification error:", err);
+      console.log("Notification error:", err.msg || err);
     }
 
     return res.status(201).json({
@@ -92,7 +93,7 @@ const toggleLike = async (req, res) => {
       likes: blog.likes.length
     });
   } catch (error) {
-    console.log(error);
+    console.log("ERROR:", error.message);
     res.status(500).json({ error: error.message });
   }
 }
