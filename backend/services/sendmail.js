@@ -4,9 +4,8 @@ const sendmail = async (to, subject, text) => {
     try {
      const transporter = nodemailler.createTransport({
             // 'service' ko hata kar manual host/port dena Render par better hai
-      host: "smtp.gmail.com",
-      port: 587, // 🔥 465 nahi, 587 use kar
-      secure: false, // 🔥 important
+      host: "gmail",
+       // 🔥 important
       auth: {
         user: process.env.APP_EMAIL,
         pass: process.env.APP_PASSWORD,
