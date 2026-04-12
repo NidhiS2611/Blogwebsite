@@ -37,7 +37,7 @@ const Accountsetting = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white py-10">
+    <div className=" bg-black text-white py-10">
       <div className="max-w-lg mx-auto px-4">
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">

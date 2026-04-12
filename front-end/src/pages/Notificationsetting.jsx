@@ -60,6 +60,9 @@ const Notificationsetting = () => {
 
   return (
     <div className="max-w-md text-white px-4 md:px-0 mx-4 ">
+      <Link to="/settings" className="p-2 hover:bg-neutral-900 rounded-full transition-colors">
+            <ArrowLeft size={20} />
+          </Link>
       <h2 className="text-xl font-semibold mb-6">
         Notification Settings
       </h2>
