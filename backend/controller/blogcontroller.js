@@ -6,19 +6,20 @@ const notifyOnNewBlog = require('../utility/notificationonpost')
 const notifyOnlike = require('../utility/notificationonlike');
 
 const createblog = async (req, res) => {
-  // Ensure user is authenticated
-
-  const userid = req.user.id;
-  console.log(userid);
-
-
-
   try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ msg: "Unauthorized" });
+    }
+
+    const userid = req.user.id;
+
     const { title, content, excerpt, category } = req.body;
-    const media = req.file ? req.file.path : "default.jpg";
+    const media = req.file?.path || "default.jpg";
 
     if (!title || !content || !excerpt || !category) {
-      res.json({ msg: "Title, content, excerpt, and category are required" });
+      return res.status(400).json({
+        msg: "Title, content, excerpt, and category are required",
+      });
     }
 
     const blog = await blogmodel.create({
@@ -27,23 +28,36 @@ const createblog = async (req, res) => {
       author: userid,
       media,
       excerpt,
-      category
+      category,
     });
 
-    // attach blog to user safely
     const user = await usermodel.findById(userid);
     if (user) {
       user.Blog = user.Blog || [];
       user.Blog.push(blog._id);
       await user.save();
     }
-    await notifyOnNewBlog({ blogId: blog._id, blogOwnerId: userid });
-    res.status(201).json({ msg: "Blog created successfully", blog });
+
+    // safe notification
+    try {
+      await notifyOnNewBlog({ blogId: blog._id, blogOwnerId: userid });
+    } catch (err) {
+      console.log("Notification error:", err);
+    }
+
+    return res.status(201).json({
+      msg: "Blog created successfully",
+      blog,
+    });
+
   } catch (error) {
     console.log(error);
-    res.status(500).json({ msg: "Server error" ,error:error.message});
+    return res.status(500).json({
+      msg: "Server error",
+      error: error.message,
+    });
   }
-}
+};
 const toggleLike = async (req, res) => {
 
   try {
