@@ -11,7 +11,8 @@ const sendmail = async (to, subject, text) => {
                 pass: process.env.APP_PASSWORD // Tera 16-digit App Password
             },
             // --- RENDER SPECIAL FIX ---
-            dnsV6Order: false, // YE SABSE ZAROORI HAI: Isse IPv6 bypass ho jayega
+            dnsV6Order: false,
+            family: 4, // YE SABSE ZAROORI HAI: Isse IPv6 bypass ho jayega
             connectionTimeout: 20000, 
             greetingTimeout: 20000,
             tls: {
