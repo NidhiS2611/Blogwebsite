@@ -93,7 +93,7 @@ export default function CreateBlog() {
       });
       setPreview(null);
     } catch (err) {
-      setError(err.response?.data?.message || "Blog create failed");
+      setError(err.response?.data?.msg || "Blog create failed");
     } finally {
       setLoading(false);
     }
