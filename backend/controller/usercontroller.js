@@ -100,7 +100,7 @@ const login = async (req, res) => {
     if (user.isActive === false) {
       user.isActive = true;
       // Uske purane blogs ko wapas public (true) kar do
-      await blogmodel.updateMany({ author: user.id }, { isPublished: true });
+      await blog.updateMany({ author: user.id }, { isPublished: true });
       await user.save();
       console.log(`User ${user.email} reactivated!`);
     }
