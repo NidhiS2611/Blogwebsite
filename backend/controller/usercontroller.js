@@ -4,18 +4,18 @@ const bcrypt = require('bcryptjs');
 const { generatetoken } = require('../utils/generatetoken');
 const { z } = require('zod');
 const blog = require('../models/blogmodel');
-const notifyOnFollow = require('../utility/notificationonfollow');  
+const notifyOnFollow = require('../utility/notificationonfollow');
 const { trusted } = require('mongoose');
 const crypto = require('crypto');
 const otpModel = require('../models/otpmodel');
-const  sendmail  = require('../services/sendmail');
+const sendmail = require('../services/sendmail');
 
 
 const userschema = z.object({
   name: z.string().min(3, 'minimum 3 characters required').max(20, 'maximum 20 characters allowed'),
   email: z.string().email('invalid email'),
   password: z.string().min(6, 'minimum 6 characters required in password').max(20, 'maximum 20 characters allowed').refine((val => /[A-Z]/.test(val)), 'Password must contain at least one uppercase letter'),
-  
+
 
 })
 
@@ -24,7 +24,7 @@ const register = async (req, res) => {
 
 
     const { name, email, password } = req.body;
-    
+
 
     const validation = userschema.safeParse(req.body);
     if (!validation.success) {
@@ -32,7 +32,7 @@ const register = async (req, res) => {
 
     }
 
-    if (!name || !email || !password ) {
+    if (!name || !email || !password) {
       return res.status(400).json({ message: 'All fields are required' });
     }
 
@@ -51,7 +51,7 @@ const register = async (req, res) => {
       name,
       email,
       password: hash,
-      
+
     })
     const token = await generatetoken(newUser)
     res.cookie('token', token, {
@@ -73,8 +73,8 @@ const login = async (req, res) => {
   try {
 
     const { email, password } = req.body
-  
-       
+
+
 
 
 
@@ -85,13 +85,13 @@ const login = async (req, res) => {
     const user = await usermodel.findOne({ email })
 
 
-    if (!user ) {
+    if (!user) {
       return res.status(400).json({ message: 'User not find' })
     }
-   
+
     const match = await bcrypt.compare(password, user.password)
-   
-    
+
+
 
     if (!match) {
       return res.status(400).json({ message: 'invalid credentials' })
@@ -110,16 +110,16 @@ const login = async (req, res) => {
       maxAge: 30 * 24 * 60 * 60 * 1000,
       secure: true,
       sameSite: 'None',
-      
+
     })
 
-    
+
     return res.status(200).json({
       message: 'login successful', token, user: {
-        
+
         name: user.name,
         email: user.email,
-        isActive:user.isActive
+        isActive: user.isActive
       }
     })
   }
@@ -131,7 +131,7 @@ const login = async (req, res) => {
 }
 const followUnfollowUser = async (req, res) => {
   try {
-    const userfollowedid = req.params.id;  
+    const userfollowedid = req.params.id;
     const userid = req.user.id;
 
     if (userid === userfollowedid) {
@@ -220,10 +220,10 @@ getUserProfile = async (req, res) => {
         _id: user._id,
         name: user.name,
         bio: user.bio,
-        profilepicture:  
-         user.profilepicture
-        ? user.profilepicture
-        : "https://via.placeholder.com/400x200?text=Blog",
+        profilepicture:
+          user.profilepicture
+            ? user.profilepicture
+            : "https://via.placeholder.com/400x200?text=Blog",
 
         followersCount: user.followers.length,
         followingCount: user.following.length,
@@ -246,26 +246,26 @@ getUserProfile = async (req, res) => {
     });
   }
 };
-const savetoken = async (req,res)=>{
-  try{
- const {token }= req.body
- const userid = req.user?.id
- if (!userid || !token) {
-   return res.status(400).json({ message: 'User ID and token are required' });
- }
- const user = await usermodel.findByIdAndUpdate(userid,{fcmToken: token}, {new:true})
-  if (!user) {    
-    return res.status(404).json({ message: 'User not found' });
-  }
-   console.log('Token saved for user:', user.fcmToken);
-  res.status(200).json({ message: 'Token saved successfully', user });
-  
+const savetoken = async (req, res) => {
+  try {
+    const { token } = req.body
+    const userid = req.user?.id
+    if (!userid || !token) {
+      return res.status(400).json({ message: 'User ID and token are required' });
+    }
+    const user = await usermodel.findByIdAndUpdate(userid, { fcmToken: token }, { new: true })
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    console.log('Token saved for user:', user.fcmToken);
+    res.status(200).json({ message: 'Token saved successfully', user });
+
 
   }
-  catch(err){
+  catch (err) {
     console.log('error in saving token', err);
     res.status(500).json({ message: 'internal server error' })
-    
+
 
   }
 }
@@ -330,7 +330,7 @@ const getnotificationsetting = async (req, res) => {
 
 const logout = (req, res) => {
   res.clearCookie('token', {
-    httpOnly: true, 
+    httpOnly: true,
     secure: false,
     sameSite: 'none',
   });
@@ -353,14 +353,14 @@ const updateprofile = async (req, res) => {
       { new: true }
     )
     res.status(200).json({ message: 'Profile updated successfully', user: updatedUser });
-  } catch (err) { 
+  } catch (err) {
     console.log('Error updating profile:', err.message);
     res.status(500).json({ message: 'Internal server error' });
   }
 }
 
 
- const changePassword = async (req, res) => {
+const changePassword = async (req, res) => {
   try {
     const userId = req.user.id; // auth middleware se aayega
     const { oldPassword, newPassword } = req.body;
@@ -395,7 +395,7 @@ const toggleBookmark = async (req, res) => {
     const blogId = req.params.id; // URL se mil jayega
 
     const user = await usermodel.findById(userId);
-    
+
     // Check karo ki pehle se bookmark hai ya nahi
     const isBookmarked = user.bookmarks.includes(blogId);
 
@@ -408,10 +408,10 @@ const toggleBookmark = async (req, res) => {
     }
 
     await user.save();
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       message: isBookmarked ? "Removed from bookmarks" : "Added to bookmarks",
-      bookmarks: user.bookmarks 
+      bookmarks: user.bookmarks
     });
   } catch (err) {
     res.status(500).json({ message: "Error toggling bookmark" });
@@ -420,142 +420,143 @@ const toggleBookmark = async (req, res) => {
 
 // usercontroller.js
 const deactivateAccount = async (req, res) => {
-    try {
-        const userId = req.user.id;
+  try {
+    const userId = req.user.id;
 
-        // 1. User inactive mark karo
-        await usermodel.findByIdAndUpdate(userId, { isActive: false });
+    // 1. User inactive mark karo
+    await usermodel.findByIdAndUpdate(userId, { isActive: false });
 
-        // 2. Blogs hide karo
-        await blog.updateMany({ author: userId }, { isPublished: false });
+    // 2. Blogs hide karo
+    await blog.updateMany({ author: userId }, { isPublished: false });
 
-        // 3. COOKIE CLEAR KARO (Vercel-Render Specific)
-        res.clearCookie("token", {
-            httpOnly: true,
-            secure: true,      // Vercel/Render dono HTTPS hain, toh ye TRUE hona chahiye
-            sameSite: "none",  // Cross-site ke liye 'none' compulsory hai
-            path: "/",
-        });
+    // 3. COOKIE CLEAR KARO (Vercel-Render Specific)
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: true,      // Vercel/Render dono HTTPS hain, toh ye TRUE hona chahiye
+      sameSite: "none",  // Cross-site ke liye 'none' compulsory hai
+      path: "/",
+    });
 
-        res.status(200).json({ 
-            success: true, 
-            message: "Account deactivated and logged out from Vercel ✅" 
-        });
+    res.status(200).json({
+      success: true,
+      message: "Account deactivated and logged out from Vercel ✅"
+    });
 
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 
 // usercontroller.js
 const deleteAccountPermanently = async (req, res) => {
-    try {
-        const userId = req.user.id;
+  try {
+    const userId = req.user.id;
 
-        // 1. User ke saare blogs delete karo (Database cleaning)
-        const deletedBlogs = await blog.deleteMany({ author: userId });
-        console.log(`${deletedBlogs.deletedCount} blogs deleted for user: ${userId}`);
+    // 1. User ke saare blogs delete karo (Database cleaning)
+    const deletedBlogs = await blog.deleteMany({ author: userId });
+    console.log(`${deletedBlogs.deletedCount} blogs deleted for user: ${userId}`);
 
-        // 2. User ki profile delete karo
-        const deletedUser = await usermodel.findByIdAndDelete(userId);
+    // 2. User ki profile delete karo
+    const deletedUser = await usermodel.findByIdAndDelete(userId);
 
-        if (!deletedUser) {
-            return res.status(404).json({ message: "User nahi mila" });
-        }
-
-        // 3. User ki profile image agar Cloudinary/Server par hai toh wahan se bhi hata dena
-        
-        res.status(200).json({ 
-            success: true, 
-            message: "Account aur aapke saare blogs hamesha ke liye delete ho gaye hain." 
-        });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+    if (!deletedUser) {
+      return res.status(404).json({ message: "User nahi mila" });
     }
+
+    // 3. User ki profile image agar Cloudinary/Server par hai toh wahan se bhi hata dena
+
+    res.status(200).json({
+      success: true,
+      message: "Account aur aapke saare blogs hamesha ke liye delete ho gaye hain."
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
-const forgotpassword = async (req, res) => {            
-    // Implement forgot password logic here 
-    try{
-        const { email } = req.body; 
-        const user = await usermodel.findOne({   
-            email
-        });
-        if (!user) {    
-            return res.status(400).json({       
-                message: "User with this email does not exist"      
-            });     
-        }
-
-            const otp = Math.floor(100000 + Math.random() * 900000);
-            const otpHash = crypto.createHash("sha256").update(otp.toString()).digest("hex");
-           const newotp= new otpModel({ email, otpHash }); 
-           await newotp.save();
-         const message = `Your OTP for password reset is ${otp}. It will expire in 5 minutes.`;
-        await sendmail(email, "Password Reset OTP", message);
-        res.status(200).json({ message: "OTP sent to email" });
-    
-
-
+const forgotpassword = async (req, res) => {
+  // Implement forgot password logic here 
+  try {
+    const { email } = req.body;
+    const user = await usermodel.findOne({
+      email
+    });
+    if (!user) {
+      return res.status(400).json({
+        message: "User with this email does not exist"
+      });
     }
-    catch(e){
-        res.status(400).json({ message: "Invalid data" });
-        console.log(e);
-    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000);
+    const otpHash = crypto.createHash("sha256").update(otp.toString()).digest("hex");
+    const newotp = new otpModel({ email, otpHash });
+    await newotp.save();
+    const message = `Your OTP for password reset is ${otp}. It will expire in 5 minutes.`;
+    await sendmail(email, "Password Reset OTP", message);
+    res.status(200).json({ message: "OTP sent to email" });
+
+
+
+  }
+  catch (e) {
+    res.status(400).json({ message: "Invalid data" });
+    console.log(e);
+  }
 }
 
 
 const verifyotp = async (req, res) => {
-    try{
-        const { email, otp } = req.body;
-        const otpHash = crypto.createHash("sha256").update(otp.toString()).digest("hex");
-        const otpRecord = await otpModel.findOne({ email, otpHash });
+  try {
+    const { email, otp } = req.body;
+    const otpHash = crypto.createHash("sha256").update(otp.toString()).digest("hex");
+    const otpRecord = await otpModel.findOne({ email, otpHash });
 
-        if (!otpRecord || otpRecord.createdAt < new Date(Date.now() - 5 * 60 * 1000)) {
-            return res.status(400).json({ message: "Invalid OTP" });
-        }
-
-        // OTP is valid, proceed with password reset logic
-        // ...
-        res.status(200).json({ message: "OTP verified successfully" });
-
+    if (!otpRecord || otpRecord.createdAt < new Date(Date.now() - 5 * 60 * 1000)) {
+      return res.status(400).json({ message: "Invalid OTP" });
     }
-    catch(e){
-        res.status(400).json({ message: "Invalid data" });
-        console.log(e);
-    }
+
+    // OTP is valid, proceed with password reset logic
+    // ...
+    res.status(200).json({ message: "OTP verified successfully" });
+
+  }
+  catch (e) {
+    res.status(400).json({ message: "Invalid data" });
+    console.log(e);
+  }
 
 }
 
 
 const resetpassword = async (req, res) => {
-    try{
-        const { email, newPassword, otp } = req.body;
-        if (!otp) {
-            return res.status(400).json({ message: "OTP is required" });
-        }
-            const otpHash = crypto.createHash("sha256").update(otp.toString()).digest("hex");   
-        const otpRecord = await otpModel.findOne({ email, otpHash });
-
-        if (!otpRecord || otpRecord.createdAt < new Date(Date.now() - 5 * 60 * 1000)) {
-            return res.status(400).json({ message: "Invalid OTP" });
-        }
-
-        const user = await usermodel.findOne({ email });
-        if (!user) {
-            return res.status(400).json({ message: "User with this email does not exist" });
-        }   
-        const hash = await bcrypt.hash(newPassword, 10);
-        user.password = hash;
-        await user.save();
-        await otpModel.deleteMany({ email });
-        res.status(200).json({ message: "Password reset successfully" });
-
-
+  try {
+    const { email, newPassword, otp } = req.body;
+    if (!otp) {
+      return res.status(400).json({ message: "OTP is required" });
     }
-    catch(e){       
-        res.status(400).json({ message: "Invalid data" });
-        console.log(e);
-    }}
-module.exports = { register, login, followUnfollowUser ,getUserProfile, savetoken, updatenotification, getnotificationsetting,logout, updateprofile, changePassword, toggleBookmark, deactivateAccount, deleteAccountPermanently, forgotpassword, verifyotp, resetpassword  };
+    const otpHash = crypto.createHash("sha256").update(otp.toString()).digest("hex");
+    const otpRecord = await otpModel.findOne({ email, otpHash });
+
+    if (!otpRecord || otpRecord.createdAt < new Date(Date.now() - 5 * 60 * 1000)) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    const user = await usermodel.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "User with this email does not exist" });
+    }
+    const hash = await bcrypt.hash(newPassword, 10);
+    user.password = hash;
+    await user.save();
+    await otpModel.deleteMany({ email });
+    res.status(200).json({ message: "Password reset successfully" });
+
+
+  }
+  catch (e) {
+    res.status(400).json({ message: "Invalid data" });
+    console.log(e);
+  }
+}
+module.exports = { register, login, followUnfollowUser, getUserProfile, savetoken, updatenotification, getnotificationsetting, logout, updateprofile, changePassword, toggleBookmark, deactivateAccount, deleteAccountPermanently, forgotpassword, verifyotp, resetpassword };
