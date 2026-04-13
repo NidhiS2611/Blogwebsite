@@ -282,7 +282,7 @@ const updateBlog = async (req, res) => {
 
     // ✔ If image uploaded => update it
     if (req.file) {
-      updateData.media = req.file.path;
+      updateData.media = req.file?.path;
     }
 
     // Final update
