@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken')
 const authmiddle = async(req,res,next)=>{
     try{
 const token = req.cookies.token
+console.log("Token from cookie:", token); // Debugging line
 
 if (!token || token === 'undefined' || token === 'null') {
             return res.status(401).json({ error: 'unauthorized access' });
