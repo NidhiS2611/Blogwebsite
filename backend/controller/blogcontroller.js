@@ -282,7 +282,7 @@ const updateBlog = async (req, res) => {
 
     // ✔ If image uploaded => update it
     if (req.file) {
-      updateData.media = req.file.filename;
+      updateData.media = req.file.path;
     }
 
     // Final update
@@ -295,8 +295,8 @@ const updateBlog = async (req, res) => {
     res.json({ msg: "Blog updated successfully", blog: updatedBlog });
 
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ msg: "Server error" });
+    console.log(error.message);
+    res.status(500).json({ msg: error.message || "Server error" });
   }
 };
 
