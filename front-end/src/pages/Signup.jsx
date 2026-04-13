@@ -15,7 +15,7 @@ export default function Signup() {
 
   const handleGoogleSignup = () => {
     // Google Auth Logic here (Firebase or Passport)
-    console.log("Redirecting to Google Auth...");
+    window.location.href = `${api.defaults.baseURL}/auth/google`; // Example for Passport
   };
 
   const handleSignup = async (e) => {

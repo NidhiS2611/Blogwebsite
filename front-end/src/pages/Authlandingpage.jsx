@@ -1,7 +1,14 @@
 import { useNavigate } from "react-router-dom";
+import api from "../services/Axiosinstance";
 
 export default function AuthLanding() {
   const navigate = useNavigate();
+  const handleGoogleAuth = () => {
+    // Yahan tera Google Auth logic aayega (Firebase ya Passport)
+    console.log("Google Auth Clicked");
+    // Example for Passport
+    window.location.href = `${api.defaults.baseURL}/auth/google`;
+  }
 
   return (
     /* h-[100dvh] (dynamic viewport height) aur overflow-hidden sabse zaroori hai */
@@ -38,7 +45,10 @@ export default function AuthLanding() {
             </h2>
 
             <div className="flex flex-col gap-3">
-              <button className="w-full bg-neutral-800 text-white py-3 rounded-full font-medium hover:bg-neutral-700 transition text-sm">
+              <button 
+                onClick={handleGoogleAuth}
+                className="w-full bg-neutral-800 text-white py-3 rounded-full font-medium hover:bg-neutral-700 transition text-sm"
+              >
                 Continue with Google
               </button>
 

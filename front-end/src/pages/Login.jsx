@@ -4,6 +4,7 @@ import { useAuth } from "../context/Authcontext";
 import { Mail, Lock } from "lucide-react";
 import Authcomponent from "../component/Authcomponent";
 import { requestPermissionAndGetToken } from "../firebase/requestPermission";
+import api from "../services/Axiosinstance";
 
 export default function Login() {
   const { login } = useAuth();
@@ -27,7 +28,7 @@ export default function Login() {
   const handleGoogleLogin = () => {
     // Bhai yahan tera Google Auth logic aayega (Firebase ya Passport)
     console.log("Google Login Clicked");
-    // window.location.href = "http://localhost:5000/auth/google"; // Example for Passport
+     window.location.href = `${api.defaults.baseURL}/auth/google`; // Example for Passport
   };
 
   const handleSubmit = async (e) => {
