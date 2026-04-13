@@ -21,9 +21,10 @@ const userRoutes = require('./route/userroutes');
 const blogRoutes = require('./route/blogroutes');
 const commentRoutes = require('./route/commentroute');
 const notificationRoutes = require('./route/notificationroutes');
-
+const authRoutes = require('./route/goggleroutes');
 app.use('/comment', commentRoutes);
 app.use('/notification', notificationRoutes);
+app.use('/auth', authRoutes);
 
 app.use('/blog', blogRoutes);
 app.use('/user', userRoutes);
