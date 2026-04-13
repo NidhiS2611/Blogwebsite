@@ -21,6 +21,7 @@ router.get('/google/callback',
 
       // 🔹 JWT Token generate karo (Wahi logic jo tune banaya hai)
       const token = generatetoken(user._id);
+      console.log("token",token)
 
       // 🔹 Cookie set karo (Vercel/Render ke liye optimized)
       res.cookie("token", token, {
