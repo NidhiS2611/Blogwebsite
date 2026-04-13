@@ -1,6 +1,6 @@
 const express = require('express');
 const passport = require('passport');
-const {generateToken} = require('../utils/jwt');
+const {generateToken} = require('../utils/generatetoken');
 const router = express.Router();
 
 // 1. Google Login Trigger
