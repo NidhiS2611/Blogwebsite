@@ -9,7 +9,7 @@ router.get('/google', passport.authenticate('google', { scope: ['profile', 'emai
 // 2. Google Callback (Yahan sara magic hoga)
 router.get('/google/callback', 
   passport.authenticate('google', { failureRedirect: '/login', session: false }),
-  (req, res) => {
+   async(req, res) => {
     try {
       // ✅ Passport ne user ko 'req.user' mein daal diya hai
       const user = req.user;
@@ -20,7 +20,7 @@ router.get('/google/callback',
       }
 
       // 🔹 JWT Token generate karo (Wahi logic jo tune banaya hai)
-      const token = generatetoken(user._id);
+      const token = await generatetoken(user._id);
       console.log("token",token)
 
       // 🔹 Cookie set karo (Vercel/Render ke liye optimized)
