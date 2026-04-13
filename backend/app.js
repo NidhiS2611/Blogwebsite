@@ -2,6 +2,11 @@ const express = require('express');
 const app = express();
 const path = require('path');
 
+const passport = require('passport')
+require('./utils/passport'); // Passport configuration
+app.use(passport.initialize());
+
+
 require('dotenv').config();
 const connectDB = require('./config/mongooseconnect');
 const cookieParser = require('cookie-parser');
