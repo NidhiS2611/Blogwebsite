@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
 import { Mail, Lock } from "lucide-react";
@@ -17,6 +17,29 @@ export default function Login() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isGoogleLogin, setIsGoogleLogin] = useState(false);
+
+  // 🔥 COMMON FUNCTION (FCM + REDIRECT)
+  const handlePostLogin = async () => {
+    try {
+      await requestPermissionAndGetToken(); // ✅ ek hi jagah FCM
+    } catch (err) {
+      console.log("FCM error:", err);
+    }
+
+    navigate("/home", { replace: true }); // ✅ ek hi jagah redirect
+  };
+
+  // 🔥 GOOGLE REDIRECT HANDLE
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const isGoogle = params.get("google");
+
+    if (isGoogle) {
+      setIsGoogleLogin(true);
+      handlePostLogin(); // ✅ reuse
+    }
+  }, []);
 
   const handleChange = (e) => {
     setFormData({
@@ -26,9 +49,7 @@ export default function Login() {
   };
 
   const handleGoogleLogin = () => {
-    // Bhai yahan tera Google Auth logic aayega (Firebase ya Passport)
-    console.log("Google Login Clicked");
-     window.location.href = `${api.defaults.baseURL}/auth/google`; // Example for Passport
+    window.location.href = `${api.defaults.baseURL}/auth/google`;
   };
 
   const handleSubmit = async (e) => {
@@ -38,14 +59,26 @@ export default function Login() {
 
     try {
       await login(formData.email, formData.password);
-      requestPermissionAndGetToken();
-      navigate("/home");
+
+      await handlePostLogin(); // ✅ SAME function
     } catch (err) {
       setError(err?.response?.data?.message || "Login failed");
     } finally {
       setLoading(false);
     }
   };
+
+  // 🔥 LOADER UI (Google login ke liye)
+  if (isGoogleLogin) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-black text-white">
+        <div className="w-8 h-8 border-4 border-violet-500 border-t-transparent rounded-full animate-spin"></div>
+        <p className="mt-4 text-sm text-gray-400">
+          Signing you in with Google...
+        </p>
+      </div>
+    );
+  }
 
   return (
     <Authcomponent>
@@ -62,7 +95,7 @@ export default function Login() {
           </p>
         </div>
 
-        {/* 🔹 GOOGLE BUTTON */}
+        {/* GOOGLE BUTTON */}
         <button
           onClick={handleGoogleLogin}
           className="w-full flex items-center justify-center gap-3 bg-neutral-900 border border-neutral-800 
@@ -76,7 +109,7 @@ export default function Login() {
           Continue with Google
         </button>
 
-        {/* 🔹 DIVIDER */}
+        {/* DIVIDER */}
         <div className="relative mb-6">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-neutral-800"></div>
@@ -86,8 +119,8 @@ export default function Login() {
           </div>
         </div>
 
+        {/* FORM */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* EMAIL */}
           <div className="relative">
             <Mail className="absolute left-3 top-3.5 w-4 h-4 text-gray-500" />
             <input
@@ -101,7 +134,6 @@ export default function Login() {
             />
           </div>
 
-          {/* PASSWORD */}
           <div className="relative">
             <Lock className="absolute left-3 top-3.5 w-4 h-4 text-gray-500" />
             <input
@@ -125,14 +157,12 @@ export default function Login() {
             </button>
           </div>
 
-          {/* ERROR */}
           {error && (
             <p className="text-sm text-red-400 text-center animate-pulse">
               {error}
             </p>
           )}
 
-          {/* SIGN IN BUTTON */}
           <button
             type="submit"
             disabled={loading}

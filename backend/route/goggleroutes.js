@@ -33,7 +33,7 @@ router.get('/google/callback',
 
       // 🔹 Success! Ab frontend ke home page par bhej do
       // Frontend is cookie ko automatically read kar lega (Axios withCredentials: true se)
-      res.redirect(`${process.env.FRONTEND_URL}/home`);
+      res.redirect(`${process.env.FRONTEND_URL}/login?google=true`);
 
     } catch (error) {
       console.error("JWT Error in Google Callback:", error);
