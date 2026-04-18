@@ -233,9 +233,20 @@ const handleFollow = async () => {
         <h1 className="text-xl sm:text-2xl font-bold">{post.title}</h1>
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
-          <p className="text-gray-400 text-sm">
-            By {post.authorData?.name || "Unknown"}
-          </p>
+         <div
+  onClick={() => navigate(`/profile/${post.authorData?._id}`)}
+  className="flex items-center gap-2 cursor-pointer"
+>
+  <img
+    src={post.authorData?.profilePic || "/default.png"}
+    alt="author"
+    className="w-8 h-8 rounded-full object-cover"
+  />
+
+  <span className="text-gray-300 text-sm">
+    {post.authorData?.name || "Unknown"}
+  </span>
+</div>
 
           {currentUser && currentUser._id !== post.authorData?._id && (
             <button
