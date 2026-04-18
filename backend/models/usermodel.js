@@ -98,7 +98,18 @@ const userschema = new mongoose.Schema({
         enum: ['manual', 'google'],
         default: 'manual' // By default hum manual maan ke chalenge
     }
+    ,
+    isOnline: {
+        type: Boolean,
+        default: false
+    }
+    ,
+    LastSeen: {
+        type: Date,
+        default: Date.now
+    }
 },
+
     { timestamps: true }
 )
 const usermodel = mongoose.model('user', userschema)

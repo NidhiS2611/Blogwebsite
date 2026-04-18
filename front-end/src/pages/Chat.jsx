@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, Send } from "lucide-react";
 import { useAuth } from "../context/Authcontext";
 import api from "../services/Axiosinstance";
+import { socket } from "../socket"; // 🔥 ADD
 
 export default function Chat() {
   const navigate = useNavigate();
@@ -44,6 +45,32 @@ export default function Chat() {
     if (userId) fetchMessages();
   }, [userId]);
 
+  /* ================= SOCKET ================= */
+  useEffect(() => {
+    if (!currentUser?._id) return;
+
+    // 🟢 user online
+    socket.emit("addUser", currentUser._id);
+
+    // 📩 receive real-time message
+    socket.on("receive_message", (data) => {
+      if (data.senderId === userId) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            _id: Date.now(),
+            sender: data.senderId,
+            text: data.text,
+          },
+        ]);
+      }
+    });
+
+    return () => {
+      socket.off("receive_message");
+    };
+  }, [currentUser, userId]);
+
   /* ================= SEND MESSAGE ================= */
   const sendMessage = async () => {
     if (!text.trim()) return;
@@ -59,13 +86,20 @@ export default function Chat() {
     setMessages((prev) => [...prev, tempMsg]);
     setText("");
 
+    // 🔥 SOCKET SEND (REAL-TIME)
+    socket.emit("send_message", {
+      senderId: currentUser._id,
+      receiverId: userId,
+      text,
+    });
+
     try {
       const res = await api.post("/message/send", {
         receiverId: userId,
         text,
       });
 
-      // replace temp message
+      // replace temp msg with DB msg
       setMessages((prev) =>
         prev.map((m) => (m._id === tempMsg._id ? res.data.message : m))
       );
@@ -97,7 +131,8 @@ export default function Chat() {
       {/* MESSAGES */}
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {messages.map((msg) => {
-          const isMe = msg.sender === currentUser._id;
+          const isMe =
+            (msg.sender || msg.senderId) === currentUser._id;
 
           return (
             <div
