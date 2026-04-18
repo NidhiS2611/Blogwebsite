@@ -139,9 +139,8 @@ const followUnfollowUser = async (req, res) => {
     }
 
     const user = await usermodel.findById(userid);
-    const followedUser = await usermodel.findById(userfollowedid);
 
-    if (!user || !followedUser) {
+    if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
@@ -153,20 +152,25 @@ const followUnfollowUser = async (req, res) => {
 
     if (isAlreadyFollowing) {
       // 🔹 UNFOLLOW
-      user.following = user.following.filter(
-        id => id.toString() !== userfollowedid
-      );
+      await usermodel.findByIdAndUpdate(userid, {
+        $pull: { following: userfollowedid }
+      });
 
-      followedUser.followers = followedUser.followers.filter(
-        id => id.toString() !== userid
-      );
+      await usermodel.findByIdAndUpdate(userfollowedid, {
+        $pull: { followers: userid }
+      });
 
       isFollowing = false;
 
     } else {
       // 🔹 FOLLOW
-      user.following.push(userfollowedid);
-      followedUser.followers.push(userid);
+      await usermodel.findByIdAndUpdate(userid, {
+        $addToSet: { following: userfollowedid }
+      });
+
+      await usermodel.findByIdAndUpdate(userfollowedid, {
+        $addToSet: { followers: userid }
+      });
 
       isFollowing = true;
 
@@ -176,12 +180,9 @@ const followUnfollowUser = async (req, res) => {
       });
     }
 
-    await user.save();
-    await followedUser.save();
-
     return res.status(200).json({
       message: isFollowing ? "Followed successfully" : "Unfollowed successfully",
-      isFollowing   // 👈 IMPORTANT
+      isFollowing
     });
 
   } catch (error) {
@@ -189,6 +190,7 @@ const followUnfollowUser = async (req, res) => {
     res.status(500).json({ error: "Something went wrong" });
   }
 };
+
 
 
 
