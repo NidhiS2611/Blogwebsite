@@ -13,8 +13,7 @@ const connectDB = require('./config/mongooseconnect');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 
-// 🔥 DB connect
-connectDB();
+// 🔥 DB conne
 
 // 🔥 create server
 const server = http.createServer(app);
