@@ -9,7 +9,7 @@ import api from "../services/Axiosinstance";
 export default function Blogdetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser ,setUser } = useAuth();
 
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
