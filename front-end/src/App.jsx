@@ -5,6 +5,7 @@ import Notificationlistener from "./component/Notificationlisner.jsx";
 import Homelayout from "./layout/Homelayout ";
 import AuthLanding from "./pages/Authlandingpage.jsx";
 import Forgotpasswordflow from "./pages/Forgotpasswordflow.jsx";
+import Chat from "./pages/Chat.jsx";
 
 
 // 🔥 Lazy Pages
@@ -66,7 +67,7 @@ function App() {
           <Route path="/" element={<AuthLanding />} />
           <Route path="/forgot-password" element={<Forgotpasswordflow />} />
 
-          
+          <Route path="/chat" element={<Chat />} />
           {/* Layout */}
           <Route element={<Homelayout />}>
             <Route path="/home" element={<Home />} />

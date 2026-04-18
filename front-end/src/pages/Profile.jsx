@@ -74,12 +74,12 @@ export default function Profile() {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-         setProfile((prev) => ({
-      ...prev,
-      name: res.data.user.name,
-      bio: res.data.user.bio,
-      profilepicture: res.data.user.profilepicture,
-    }));
+      setProfile((prev) => ({
+        ...prev,
+        name: res.data.user.name,
+        bio: res.data.user.bio,
+        profilepicture: res.data.user.profilepicture,
+      }));
       setIsEditingProfile(false);
     } catch (err) {
       alert("Profile update failed");
@@ -179,41 +179,41 @@ export default function Profile() {
               </div>
 
               {/* BUTTONS */}
-         <div className="flex flex-col sm:flex-row gap-3 mt-4 w-full sm:w-auto justify-center sm:justify-start">
-  
-  {/* Share */}
-  <button
-    onClick={shareProfile}
-    className="flex items-center justify-center gap-2 bg-neutral-800 px-3 py-2 rounded text-sm w-full sm:w-auto"
-  >
-    <Share2 size={16} /> Share Profile
-  </button>
+              <div className="flex flex-col sm:flex-row gap-3 mt-4 w-full sm:w-auto justify-center sm:justify-start">
 
-  {/* 💬 Message (only for other users) */}
-  {!isOwnProfile && (
-    <button
-      onClick={() => navigate(`/chat?userId=${profile._id}`)}
-      className="bg-purple-600 px-3 py-2 rounded text-sm w-full sm:w-auto"
-    >
-      💬 Message
-    </button>
-  )}
+                {/* Share */}
+                <button
+                  onClick={shareProfile}
+                  className="flex items-center justify-center gap-2 bg-neutral-800 px-3 py-2 rounded text-sm w-full sm:w-auto"
+                >
+                  <Share2 size={16} /> Share Profile
+                </button>
 
-  {/* Edit (only own profile) */}
-  {isOwnProfile && (
-    <button
-      onClick={() => {
-        setIsEditingProfile(true);
-        setEditName(profile.name);
-        setEditBio(profile.bio || "");
-      }}
-      className="bg-violet-600 px-3 py-2 rounded text-sm w-full sm:w-auto"
-    >
-      ✏️ Edit Profile
-    </button>
-  )}
+                {/* 💬 Message (only for other users) */}
+                {!isOwnProfile && (
+                  <button
+                    onClick={() => navigate(`/chat?userId=${profile._id}`)}
+                    className="bg-purple-600 px-3 py-2 rounded text-sm w-full sm:w-auto"
+                  >
+                    💬 Message
+                  </button>
+                )}
 
-</div>
+                {/* Edit (only own profile) */}
+                {isOwnProfile && (
+                  <button
+                    onClick={() => {
+                      setIsEditingProfile(true);
+                      setEditName(profile.name);
+                      setEditBio(profile.bio || "");
+                    }}
+                    className="bg-violet-600 px-3 py-2 rounded text-sm w-full sm:w-auto"
+                  >
+                    ✏️ Edit Profile
+                  </button>
+                )}
+
+              </div>
             </>
           ) : (
             <div className="bg-black p-4 rounded-lg mt-4 border border-neutral-700 w-full sm:max-w-md">
@@ -323,7 +323,7 @@ export default function Profile() {
                       {blog.excerpt}
                     </p>
                   )}
-                  
+
 
                   <div className="flex flex-wrap gap-4 mt-3 text-sm items-center">
                     <button
