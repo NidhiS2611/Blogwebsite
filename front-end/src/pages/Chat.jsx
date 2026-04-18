@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, Send } from "lucide-react";
 import { useAuth } from "../context/Authcontext";
 import api from "../services/Axiosinstance";
-import { socket } from "../socket";
+import { socket } from "../server.js";
 
 export default function Chat() {
   const navigate = useNavigate();
