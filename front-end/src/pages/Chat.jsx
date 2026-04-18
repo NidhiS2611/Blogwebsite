@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, Send } from "lucide-react";
 import { useAuth } from "../context/Authcontext";
 import api from "../services/Axiosinstance";
-import { socket } from "../socket"; // 🔥 ADD
+import { socket } from "../socket";
 
 export default function Chat() {
   const navigate = useNavigate();
@@ -16,6 +16,8 @@ export default function Chat() {
   const [receiver, setReceiver] = useState(null);
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
+
+  const [onlineUsers, setOnlineUsers] = useState([]); // 🔥 NEW
 
   /* ================= FETCH RECEIVER ================= */
   useEffect(() => {
@@ -49,10 +51,18 @@ export default function Chat() {
   useEffect(() => {
     if (!currentUser?._id) return;
 
-    // 🟢 user online
-    socket.emit("addUser", currentUser._id);
+    // 🟢 connect
+    socket.on("connect", () => {
+      console.log("🟢 Connected:", socket.id);
+      socket.emit("addUser", currentUser._id);
+    });
 
-    // 📩 receive real-time message
+    // 🔴 disconnect
+    socket.on("disconnect", () => {
+      console.log("🔴 Disconnected");
+    });
+
+    // 📩 receive message
     socket.on("receive_message", (data) => {
       if (data.senderId === userId) {
         setMessages((prev) => [
@@ -66,8 +76,16 @@ export default function Chat() {
       }
     });
 
+    // 🟢 online users
+    socket.on("getUsers", (users) => {
+      setOnlineUsers(users);
+    });
+
     return () => {
+      socket.off("connect");
+      socket.off("disconnect");
       socket.off("receive_message");
+      socket.off("getUsers");
     };
   }, [currentUser, userId]);
 
@@ -82,11 +100,9 @@ export default function Chat() {
       text,
     };
 
-    // UI instant update
     setMessages((prev) => [...prev, tempMsg]);
     setText("");
 
-    // 🔥 SOCKET SEND (REAL-TIME)
     socket.emit("send_message", {
       senderId: currentUser._id,
       receiverId: userId,
@@ -99,7 +115,6 @@ export default function Chat() {
         text,
       });
 
-      // replace temp msg with DB msg
       setMessages((prev) =>
         prev.map((m) => (m._id === tempMsg._id ? res.data.message : m))
       );
@@ -109,6 +124,11 @@ export default function Chat() {
   };
 
   if (!receiver) return <div className="text-white p-5">Loading...</div>;
+
+  // 🔥 check online
+  const isOnline = onlineUsers.some(
+    (u) => u.userId === userId
+  );
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
@@ -125,7 +145,12 @@ export default function Chat() {
           className="w-8 h-8 rounded-full"
         />
 
-        <span className="font-semibold">{receiver.name}</span>
+        <div>
+          <span className="font-semibold">{receiver.name}</span>
+          <div className={`text-xs ${isOnline ? "text-green-400" : "text-gray-400"}`}>
+            {isOnline ? "Online" : "Offline"}
+          </div>
+        </div>
       </div>
 
       {/* MESSAGES */}
