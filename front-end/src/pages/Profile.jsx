@@ -12,11 +12,13 @@ export default function Profile() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // profile edit
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editName, setEditName] = useState("");
   const [editBio, setEditBio] = useState("");
   const [editImage, setEditImage] = useState(null);
 
+  // blog edit
   const [editingBlogId, setEditingBlogId] = useState(null);
   const [editBlogTitle, setEditBlogTitle] = useState("");
   const [editBlogContent, setEditBlogContent] = useState("");
@@ -72,15 +74,14 @@ export default function Profile() {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      setProfile((prev) => ({
-        ...prev,
-        name: res.data.user.name,
-        bio: res.data.user.bio,
-        profilepicture: res.data.user.profilepicture,
-      }));
-
+         setProfile((prev) => ({
+      ...prev,
+      name: res.data.user.name,
+      bio: res.data.user.bio,
+      profilepicture: res.data.user.profilepicture,
+    }));
       setIsEditingProfile(false);
-    } catch {
+    } catch (err) {
       alert("Profile update failed");
     }
   };
@@ -107,7 +108,7 @@ export default function Profile() {
       }));
 
       setEditingBlogId(null);
-    } catch {
+    } catch (err) {
       alert("Blog update failed");
     }
   };
@@ -122,7 +123,7 @@ export default function Profile() {
         ...prev,
         articles: prev.articles.filter((b) => b._id !== blogId),
       }));
-    } catch {
+    } catch (err) {
       alert("Delete failed");
     }
   };
@@ -159,48 +160,97 @@ export default function Profile() {
             className="w-24 h-24 rounded-full border mx-auto sm:mx-0 mb-3"
           />
 
-          <h1 className="text-2xl font-bold">{profile.name}</h1>
-          <p className="text-gray-400">{profile.bio || "No bio yet"}</p>
+          {!isEditingProfile ? (
+            <>
+              <h1 className="text-2xl font-bold">{profile.name}</h1>
+              <p className="text-gray-400">{profile.bio || "No bio yet"}</p>
 
-          <div className="flex flex-wrap gap-6 mt-3 justify-center sm:justify-start text-sm">
-            <span><b>{profile.articles?.length || 0}</b> Posts</span>
-            <span><b>{profile.followers?.length || 0}</b> Followers</span>
-            <span><b>{profile.following?.length || 0}</b> Following</span>
-          </div>
+              {/* STATS */}
+              <div className="flex flex-wrap gap-6 mt-3 justify-center sm:justify-start text-sm">
+                <span>
+                  <b>{profile.articles?.length || 0}</b> Posts
+                </span>
+                <span>
+                  <b>{profile.followers?.length || 0}</b> Followers
+                </span>
+                <span>
+                  <b>{profile.following?.length || 0}</b> Following
+                </span>
+              </div>
 
-          {/* 🔥 BUTTONS */}
-          <div className="flex flex-col sm:flex-row gap-3 mt-4">
+              {/* BUTTONS */}
+         <div className="flex flex-col sm:flex-row gap-3 mt-4 w-full sm:w-auto justify-center sm:justify-start">
+  
+  {/* Share */}
+  <button
+    onClick={shareProfile}
+    className="flex items-center justify-center gap-2 bg-neutral-800 px-3 py-2 rounded text-sm w-full sm:w-auto"
+  >
+    <Share2 size={16} /> Share Profile
+  </button>
 
-            <button
-              onClick={shareProfile}
-              className="flex items-center justify-center gap-2 bg-neutral-800 px-3 py-2 rounded text-sm"
-            >
-              <Share2 size={16} /> Share Profile
-            </button>
+  {/* 💬 Message (only for other users) */}
+  {!isOwnProfile && (
+    <button
+      onClick={() => navigate(`/chat?userId=${profile._id}`)}
+      className="bg-purple-600 px-3 py-2 rounded text-sm w-full sm:w-auto"
+    >
+      💬 Message
+    </button>
+  )}
 
-            {!isOwnProfile && (
-              <button
-                onClick={() => navigate(`/chat?userId=${profile._id}`)}
-                className="bg-purple-600 px-3 py-2 rounded text-sm"
-              >
-                💬 Message
-              </button>
-            )}
+  {/* Edit (only own profile) */}
+  {isOwnProfile && (
+    <button
+      onClick={() => {
+        setIsEditingProfile(true);
+        setEditName(profile.name);
+        setEditBio(profile.bio || "");
+      }}
+      className="bg-violet-600 px-3 py-2 rounded text-sm w-full sm:w-auto"
+    >
+      ✏️ Edit Profile
+    </button>
+  )}
 
-            {isOwnProfile && (
-              <button
-                onClick={() => {
-                  setIsEditingProfile(true);
-                  setEditName(profile.name);
-                  setEditBio(profile.bio || "");
-                }}
-                className="bg-violet-600 px-3 py-2 rounded text-sm"
-              >
-                ✏️ Edit Profile
-              </button>
-            )}
-
-          </div>
+</div>
+            </>
+          ) : (
+            <div className="bg-black p-4 rounded-lg mt-4 border border-neutral-700 w-full sm:max-w-md">
+              <input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="bg-neutral-900 border p-2 w-full mb-2 rounded text-sm"
+                placeholder="Name"
+              />
+              <textarea
+                value={editBio}
+                onChange={(e) => setEditBio(e.target.value)}
+                className="bg-neutral-900 border p-2 w-full mb-2 rounded text-sm"
+                rows={3}
+                placeholder="Bio"
+              />
+              <input
+                type="file"
+                onChange={(e) => setEditImage(e.target.files[0])}
+                className="text-xs mb-3"
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={saveProfile}
+                  className="bg-violet-600 py-2 rounded w-full"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => setIsEditingProfile(false)}
+                  className="border py-2 rounded w-full"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -208,20 +258,109 @@ export default function Profile() {
       <section className="max-w-4xl mx-auto px-4 py-6">
         <h2 className="text-2xl font-bold mb-4">Articles</h2>
 
-        {profile.articles?.map((blog) => (
-          <div key={blog._id} className="border rounded-lg p-4 mb-4 bg-neutral-900">
-            <h3 className="font-semibold text-lg">{blog.title}</h3>
+        {profile.articles?.map((blog) => {
+          const isOwner =
+            currentUser?._id === blog.author ||
+            currentUser?._id === blog.author?._id;
 
-            <div className="flex gap-4 mt-3 text-sm">
-              <button
-                onClick={() => shareBlog(blog)}
-                className="text-green-400"
-              >
-                <Share2 size={14} /> share
-              </button>
+          return (
+            <div
+              key={blog._id}
+              className="border rounded-lg p-4 sm:p-5 mb-4 bg-neutral-900"
+            >
+              {editingBlogId === blog._id ? (
+                <div className="bg-black p-4 rounded-lg border border-neutral-700">
+                  <input
+                    value={editBlogTitle}
+                    onChange={(e) => setEditBlogTitle(e.target.value)}
+                    placeholder="Title"
+                    className="bg-neutral-900 border p-2 w-full mb-2 rounded text-sm"
+                  />
+                  <input
+                    value={editBlogExcerpt}
+                    onChange={(e) => setEditBlogExcerpt(e.target.value)}
+                    placeholder="Excerpt"
+                    className="bg-neutral-900 border p-2 w-full mb-2 rounded text-sm"
+                  />
+                  <textarea
+                    value={editBlogContent}
+                    onChange={(e) => setEditBlogContent(e.target.value)}
+                    placeholder="Content"
+                    rows={4}
+                    className="bg-neutral-900 border p-2 w-full mb-2 rounded text-sm"
+                  />
+                  <input
+                    value={editBlogCategory}
+                    onChange={(e) => setEditBlogCategory(e.target.value)}
+                    placeholder="Category"
+                    className="bg-neutral-900 border p-2 w-full mb-2 rounded text-sm"
+                  />
+                  <input
+                    type="file"
+                    onChange={(e) => setEditBlogImage(e.target.files[0])}
+                    className="text-xs mb-3"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => saveBlog(blog._id)}
+                      className="bg-violet-600 py-2 rounded w-full"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setEditingBlogId(null)}
+                      className="border py-2 rounded w-full"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <h3 className="font-semibold text-lg">{blog.title}</h3>
+                  {blog.excerpt && (
+                    <p className="text-sm text-gray-400 italic">
+                      {blog.excerpt}
+                    </p>
+                  )}
+                  
+
+                  <div className="flex flex-wrap gap-4 mt-3 text-sm items-center">
+                    <button
+                      onClick={() => shareBlog(blog)}
+                      className="flex items-center gap-1 text-green-400"
+                    >
+                      <Share2 size={14} /> share
+                    </button>
+
+                    {isOwner && (
+                      <>
+                        <button
+                          onClick={() => {
+                            setEditingBlogId(blog._id);
+                            setEditBlogTitle(blog.title);
+                            setEditBlogExcerpt(blog.excerpt || "");
+                            setEditBlogContent(blog.content);
+                            setEditBlogCategory(blog.category || "");
+                          }}
+                          className="text-violet-400"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => deleteBlog(blog._id)}
+                          className="text-red-400"
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </section>
     </div>
   );
