@@ -7,7 +7,7 @@ import AuthLanding from "./pages/Authlandingpage.jsx";
 import Forgotpasswordflow from "./pages/Forgotpasswordflow.jsx";
 import Chat from "./pages/Chat.jsx";
 import { useAuth } from "./context/Authcontext";
-import { socket } from "./server.js";
+import { socket } from "./server";
 
 
 // 🔥 Lazy Pages
@@ -49,8 +49,10 @@ function App() {
     }
   }, []);
 
-  useEffect(() => {
     const { user } = useAuth();
+
+  useEffect(() => {
+    
   if (!user?._id) return;
 
   socket.auth = {
