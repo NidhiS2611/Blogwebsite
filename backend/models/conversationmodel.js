@@ -1,6 +1,6 @@
 // models/conversationModel.js
 
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const conversationSchema = new mongoose.Schema(
   {
