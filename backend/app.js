@@ -2,18 +2,21 @@ const express = require('express');
 const app = express();
 const path = require('path');
 
-const http = require('http'); // 🔥 ADD
-const { Server } = require('socket.io'); // 🔥 ADD
+const http = require('http');
+const { Server } = require('socket.io');
 
 const passport = require('passport');
 require('./utils/passport');
 
 require('dotenv').config();
 const connectDB = require('./config/mongooseconnect');
+const User = require('./models/usermodel'); // 🔥 IMPORTANT
+
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 
-// 🔥 DB conne
+// 🔥 DB connect
+connectDB();
 
 // 🔥 create server
 const server = http.createServer(app);
@@ -43,6 +46,11 @@ const blogRoutes = require('./route/blogroutes');
 const commentRoutes = require('./route/commentroute');
 const notificationRoutes = require('./route/notificationroutes');
 const authRoutes = require('./route/goggleroutes');
+const conversationRoutes = require('./route/conversationroute');
+const messageRoutes = require('./route/messageroute');
+
+app.use('/conversation', conversationRoutes);
+app.use('/message', messageRoutes);
 
 app.use('/comment', commentRoutes);
 app.use('/notification', notificationRoutes);
@@ -52,66 +60,96 @@ app.use('/user', userRoutes);
 
 // ================= SOCKET LOGIC ================= //
 
-// ================= SOCKET LOGIC ================= //
-
 let users = [];
 
-// 🔥 add / update user
+// ✅ add/update user
 const addUser = (userId, socketId) => {
-  const existingUser = users.find(u => u.userId === userId);
+  const existing = users.find(
+    (u) => u.userId.toString() === userId.toString()
+  );
 
-  if (existingUser) {
-    existingUser.socketId = socketId; // update if already exists
+  if (existing) {
+    existing.socketId = socketId;
   } else {
     users.push({ userId, socketId });
   }
 };
 
-// 🔥 remove user
+// ✅ remove user
 const removeUser = (socketId) => {
-  users = users.filter(u => u.socketId !== socketId);
+  users = users.filter((u) => u.socketId !== socketId);
 };
 
-// 🔥 get user
+// ✅ get user
 const getUser = (userId) => {
-  return users.find(u => u.userId === userId);
+  return users.find(
+    (u) => u.userId.toString() === userId.toString()
+  );
 };
 
-io.on("connection", (socket) => {
-  console.log("🟢 User connected:", socket.id);
+// ================= SOCKET CONNECTION ================= //
 
-  // 🔥 auth se userId lo (BEST METHOD)
+io.on("connection", async (socket) => {
+  console.log("🟢 Connected:", socket.id);
+
   const userId = socket.handshake.auth?.userId;
 
   if (userId) {
+    // ✅ map user
     addUser(userId, socket.id);
-    console.log("🔥 userId:", userId);
+
+    // ✅ DB update → ONLINE
+    await User.findByIdAndUpdate(userId, {
+      isOnline: true,
+      lastSeen: null,
+    });
+
+    console.log("🔥 user online:", userId);
   }
 
+  // 🔥 broadcast online users
   io.emit("getUsers", users);
 
-  // 💬 SEND MESSAGE (FIXED)
-  socket.on("send_message", (data) => {
-    const { senderId, receiverId, text } = data;
+  // ================= SEND MESSAGE ================= //
 
-    const receiver = getUser(receiverId);
+  socket.on("send_message", (data) => {
+    console.log("📩 message:", data);
+
+    const receiver = getUser(data.receiverId);
 
     if (receiver) {
-      // ✅ sirf receiver ko bhej
+      // ✅ send only to receiver
       io.to(receiver.socketId).emit("receive_message", {
-        senderId,
-        text,
+        senderId: data.senderId,
+        receiverId: data.receiverId,
+        text: data.text,
       });
     } else {
-      console.log("⚠️ Receiver offline:", receiverId);
+      console.log("⚠️ Receiver offline:", data.receiverId);
     }
   });
 
-  // ❌ disconnect
-  socket.on("disconnect", () => {
+  // ================= DISCONNECT ================= //
+
+  socket.on("disconnect", async () => {
+    console.log("🔴 Disconnected:", socket.id);
+
+    const user = users.find(u => u.socketId === socket.id);
+
+    if (user) {
+      // ✅ DB update → OFFLINE
+      await User.findByIdAndUpdate(user.userId, {
+        isOnline: false,
+        lastSeen: new Date(),
+      });
+
+      console.log("❌ user offline:", user.userId);
+    }
+
     removeUser(socket.id);
+
+    // 🔥 update online users list
     io.emit("getUsers", users);
-    console.log("🔴 User disconnected:", socket.id);
   });
 });
 
@@ -119,8 +157,6 @@ io.on("connection", (socket) => {
 
 const PORT = process.env.PORT || 3000;
 
-// ❌ remove app.listen
-// ✅ use server.listen
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
