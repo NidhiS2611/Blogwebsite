@@ -6,6 +6,8 @@ import Homelayout from "./layout/Homelayout ";
 import AuthLanding from "./pages/Authlandingpage.jsx";
 import Forgotpasswordflow from "./pages/Forgotpasswordflow.jsx";
 import Chat from "./pages/Chat.jsx";
+import { useAuth } from "./context/Authcontext";
+import { socket } from "./server.js";
 
 
 // 🔥 Lazy Pages
@@ -46,6 +48,30 @@ function App() {
         .catch((err) => console.error("❌ SW failed:", err));
     }
   }, []);
+
+  useEffect(() => {
+    const { user } = useAuth();
+  if (!user?._id) return;
+
+  socket.auth = {
+    userId: user._id,
+  };
+
+  socket.connect(); // 🔥 yaha connect hoga
+
+  socket.on("connect", () => {
+    console.log("🟢 Connected:", socket.id);
+  });
+
+  socket.on("connect_error", (err) => {
+    console.log("❌ Error:", err.message);
+  });
+
+  return () => {
+    socket.off("connect");
+    socket.off("connect_error");
+  };
+}, [user]);
 
   return (
     <Router>

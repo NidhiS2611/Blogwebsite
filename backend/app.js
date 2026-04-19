@@ -52,37 +52,66 @@ app.use('/user', userRoutes);
 
 // ================= SOCKET LOGIC ================= //
 
+// ================= SOCKET LOGIC ================= //
+
 let users = [];
 
+// 🔥 add / update user
 const addUser = (userId, socketId) => {
-  if (!users.some((u) => u.userId === userId)) {
+  const existingUser = users.find(u => u.userId === userId);
+
+  if (existingUser) {
+    existingUser.socketId = socketId; // update if already exists
+  } else {
     users.push({ userId, socketId });
   }
 };
 
+// 🔥 remove user
 const removeUser = (socketId) => {
-  users = users.filter((u) => u.socketId !== socketId);
+  users = users.filter(u => u.socketId !== socketId);
+};
+
+// 🔥 get user
+const getUser = (userId) => {
+  return users.find(u => u.userId === userId);
 };
 
 io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
+  console.log("🟢 User connected:", socket.id);
 
-  // 🔥 user online
-  socket.on("addUser", (userId) => {
+  // 🔥 auth se userId lo (BEST METHOD)
+  const userId = socket.handshake.auth?.userId;
+
+  if (userId) {
     addUser(userId, socket.id);
-    io.emit("getUsers", users);
-  });
+    console.log("🔥 userId:", userId);
+  }
 
-  // 💬 basic message
+  io.emit("getUsers", users);
+
+  // 💬 SEND MESSAGE (FIXED)
   socket.on("send_message", (data) => {
-    io.emit("receive_message", data);
+    const { senderId, receiverId, text } = data;
+
+    const receiver = getUser(receiverId);
+
+    if (receiver) {
+      // ✅ sirf receiver ko bhej
+      io.to(receiver.socketId).emit("receive_message", {
+        senderId,
+        text,
+      });
+    } else {
+      console.log("⚠️ Receiver offline:", receiverId);
+    }
   });
 
   // ❌ disconnect
   socket.on("disconnect", () => {
     removeUser(socket.id);
     io.emit("getUsers", users);
-    console.log("User disconnected:", socket.id);
+    console.log("🔴 User disconnected:", socket.id);
   });
 });
 
