@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import { Send } from "lucide-react";
 import { useAuth } from "../context/Authcontext";
 import api from "../services/Axiosinstance";
-import { socket } from "../socket"; // ⚠️ make sure same file use ho
+import { socket } from "../socket";
 
 export default function Chat() {
   const { user: currentUser } = useAuth();
@@ -16,32 +16,22 @@ export default function Chat() {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [typing, setTyping] = useState(false);
 
-  // ================= SOCKET LISTEN ================= //
+  // ================= SOCKET ================= //
   useEffect(() => {
     if (!currentUser?._id) return;
 
     // 🟢 ONLINE USERS
-    const handleUsers = (users) => {
-      setOnlineUsers(users);
-    };
+    const handleUsers = (users) => setOnlineUsers(users);
 
     // 📩 RECEIVE MESSAGE
-    const handleReceive = (data) => {
-      if (data.senderId.toString() === userId.toString()) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            _id: data.messageId,
-            sender: data.senderId,
-            text: data.text,
-            status: data.status || "delivered",
-          },
-        ]);
+    const handleReceive = (msg) => {
+      if (msg.sender.toString() === userId.toString()) {
+        setMessages((prev) => [...prev, msg]);
 
-        // 👀 SEEN
+        // 👀 mark seen
         socket.emit("seen_message", {
-          messageId: data.messageId,
-          senderId: data.senderId,
+          messageId: msg._id,
+          senderId: msg.sender,
         });
       }
     };
@@ -59,8 +49,7 @@ export default function Chat() {
     const handleTyping = (data) => {
       if (data.senderId === userId) {
         setTyping(true);
-
-        setTimeout(() => setTyping(false), 2000);
+        setTimeout(() => setTyping(false), 1500);
       }
     };
 
@@ -77,7 +66,7 @@ export default function Chat() {
     };
   }, [currentUser, userId]);
 
-  // ================= FETCH OLD ================= //
+  // ================= FETCH ================= //
   useEffect(() => {
     const fetchMessages = async () => {
       try {
@@ -91,29 +80,9 @@ export default function Chat() {
     if (userId) fetchMessages();
   }, [userId]);
 
-  // ================= SEND ================= //
+  // ================= SEND MESSAGE ================= //
   const sendMessage = async () => {
     if (!text.trim()) return;
-
-    const tempId = Date.now();
-
-    const tempMsg = {
-      _id: tempId,
-      sender: currentUser._id,
-      text,
-      status: "sent",
-    };
-
-    setMessages((prev) => [...prev, tempMsg]);
-    setText("");
-
-    // 🔥 SOCKET
-    socket.emit("send_message", {
-      senderId: currentUser._id,
-      receiverId: userId,
-      text,
-      messageId: tempId,
-    });
 
     try {
       const res = await api.post("/conversation/send", {
@@ -121,22 +90,20 @@ export default function Chat() {
         text,
       });
 
-      const realMsg = res.data.message;
+      const msg = res.data.message;
 
-      // 🔥 replace temp msg
-      setMessages((prev) =>
-        prev.map((m) =>
-          m._id === tempId ? realMsg : m
-        )
-      );
+      // 🔥 add real DB message
+      setMessages((prev) => [...prev, msg]);
 
     } catch (err) {
       console.log(err);
     }
+
+    setText("");
   };
 
-  // ================= TYPING SEND ================= //
-  const handleTyping = (e) => {
+  // ================= TYPING ================= //
+  const handleTypingInput = (e) => {
     setText(e.target.value);
 
     socket.emit("typing", {
@@ -197,6 +164,7 @@ export default function Chat() {
               >
                 <p>{msg.text}</p>
 
+                {/* STATUS */}
                 {isMe && (
                   <div className="text-[10px] text-right mt-1">
 
@@ -222,7 +190,7 @@ export default function Chat() {
       <div className="flex p-2 border-t border-gray-800">
         <input
           value={text}
-          onChange={handleTyping}
+          onChange={handleTypingInput}
           placeholder="Type a message..."
           className="flex-1 bg-gray-800 p-2 rounded-l outline-none"
         />

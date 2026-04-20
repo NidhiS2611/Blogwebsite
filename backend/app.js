@@ -12,13 +12,13 @@ require('dotenv').config();
 const connectDB = require('./config/mongooseconnect');
 
 const User = require('./models/usermodel');
-const Message = require('./models/Messagemodel'); // 🔥 IMPORTANT
+const Message = require('./models/Messagemodel');
 
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 
-// ================= DB CONNECT ================= //
-
+// ================= DB ================= //
+connectDB();
 
 // ================= SERVER ================= //
 const server = http.createServer(app);
@@ -57,10 +57,9 @@ app.use('/auth', authRoutes);
 app.use('/blog', blogRoutes);
 app.use('/user', userRoutes);
 
-// ================= SOCKET USERS ================= //
+// ================= USERS ================= //
 let users = [];
 
-// ✅ ADD USER
 const addUser = (userId, socketId) => {
   const existing = users.find(
     (u) => u.userId.toString() === userId.toString()
@@ -73,19 +72,17 @@ const addUser = (userId, socketId) => {
   }
 };
 
-// ✅ REMOVE USER
 const removeUser = (socketId) => {
   users = users.filter((u) => u.socketId !== socketId);
 };
 
-// ✅ GET USER
 const getUser = (userId) => {
   return users.find(
     (u) => u.userId.toString() === userId.toString()
   );
 };
 
-// ================= SOCKET CONNECTION ================= //
+// ================= SOCKET ================= //
 io.on("connection", async (socket) => {
   console.log("🟢 Connected:", socket.id);
 
@@ -94,78 +91,52 @@ io.on("connection", async (socket) => {
   if (userId) {
     addUser(userId, socket.id);
 
-    // ✅ DB → ONLINE
     await User.findByIdAndUpdate(userId, {
       isOnline: true,
       lastSeen: null,
     });
-
-    console.log("🔥 user online:", userId);
   }
 
-  // 🔥 broadcast users
   io.emit("getUsers", users);
 
-  // ================= SEND MESSAGE ================= //
-  socket.on("send_message", async (data) => {
-    const { senderId, receiverId, text, messageId } = data;
+  // ================= SEEN ================= //
+  socket.on("seen_message", async ({ messageId, senderId }) => {
+    try {
+      const message = await Message.findById(messageId);
 
-    console.log("📩 message:", data);
+      if (!message) return;
 
-    const receiver = getUser(receiverId);
+      message.status = "seen";
+      message.seenAt = new Date();
+      await message.save();
 
-    let status = "sent";
+      const sender = getUser(senderId);
 
-    if (receiver) {
-      status = "delivered";
+      if (sender) {
+        io.to(sender.socketId).emit("message_status", {
+          messageId,
+          status: "seen",
+        });
+      }
+
+    } catch (err) {
+      console.log(err);
     }
-
-    // 🔥 DB UPDATE
-    await Message.findByIdAndUpdate(messageId, {
-      status,
-    });
-
-    if (receiver) {
-      io.to(receiver.socketId).emit("receive_message", {
-        senderId,
-        receiverId,
-        text,
-        messageId,
-        status,
-      });
-    }
-
-    // 🔥 sender ko update
-    io.to(socket.id).emit("message_status", {
-      messageId,
-      status,
-    });
   });
 
-  // ================= SEEN MESSAGE ================= //
-  socket.on("seen_message", async ({ messageId, senderId }) => {
-    console.log("👀 seen:", messageId);
+  // ================= TYPING ================= //
+  socket.on("typing", (data) => {
+    const receiver = getUser(data.receiverId);
 
-    // 🔥 DB UPDATE
-    await Message.findByIdAndUpdate(messageId, {
-      status: "seen",
-      seenAt: new Date(),
-    });
-
-    const sender = getUser(senderId);
-
-    if (sender) {
-      io.to(sender.socketId).emit("message_status", {
-        messageId,
-        status: "seen",
+    if (receiver) {
+      io.to(receiver.socketId).emit("typing", {
+        senderId: data.senderId,
       });
     }
   });
 
   // ================= DISCONNECT ================= //
   socket.on("disconnect", async () => {
-    console.log("🔴 Disconnected:", socket.id);
-
     const user = users.find((u) => u.socketId === socket.id);
 
     if (user) {
@@ -173,17 +144,12 @@ io.on("connection", async (socket) => {
         isOnline: false,
         lastSeen: new Date(),
       });
-
-      console.log("❌ user offline:", user.userId);
     }
 
     removeUser(socket.id);
-
     io.emit("getUsers", users);
   });
 });
-// TYPING
-
 
 // ================= START ================= //
 const PORT = process.env.PORT || 3000;
