@@ -8,7 +8,7 @@ import Forgotpasswordflow from "./pages/Forgotpasswordflow.jsx";
 import Chat from "./pages/Chat.jsx";
 
 import { useAuth } from "./context/Authcontext";
-import { socket } from "./socket"; // ✅ FIXED
+import { socket } from "./server.js"; // ✅ FIXED
 
 // 🔥 Lazy Pages
 const Home = lazy(() => import("./pages/Home"));
