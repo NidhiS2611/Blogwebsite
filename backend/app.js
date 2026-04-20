@@ -47,7 +47,7 @@ const commentRoutes = require('./route/commentroute');
 const notificationRoutes = require('./route/notificationroutes');
 const authRoutes = require('./route/goggleroutes');
 const conversationRoutes = require('./route/conversationroute');
-const messageRoutes = require('./route/messageroute');
+
 
 app.use('/conversation', conversationRoutes);
 app.use('/comment', commentRoutes);
