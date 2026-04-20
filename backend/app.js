@@ -50,7 +50,6 @@ const conversationRoutes = require('./route/conversationroute');
 const messageRoutes = require('./route/messageroute');
 
 app.use('/conversation', conversationRoutes);
-app.use('/message', messageRoutes);
 app.use('/comment', commentRoutes);
 app.use('/notification', notificationRoutes);
 app.use('/auth', authRoutes);
