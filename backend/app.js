@@ -182,8 +182,6 @@ io.on("connection", async (socket) => {
     io.emit("getUsers", users);
   });
 });
-// TYPING
-
 
 // ================= START ================= //
 const PORT = process.env.PORT || 3000;
