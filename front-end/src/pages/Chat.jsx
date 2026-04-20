@@ -69,7 +69,7 @@ export default function Chat() {
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const res = await api.get(`/message/${userId}`);
+        const res = await api.get(`/conversation/${userId}`);
         setMessages(res.data.messages || []);
       } catch (err) {
         console.log("Fetch error", err);
