@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import { Send } from "lucide-react";
 import { useAuth } from "../context/Authcontext";
 import api from "../services/Axiosinstance";
-import { socket } from "../server"
+import { socket } from "../socket"; // ⚠️ make sure same file use ho
 
 export default function Chat() {
   const { user: currentUser } = useAuth();
@@ -14,6 +14,7 @@ export default function Chat() {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
   const [onlineUsers, setOnlineUsers] = useState([]);
+  const [typing, setTyping] = useState(false);
 
   // ================= SOCKET LISTEN ================= //
   useEffect(() => {
@@ -37,7 +38,7 @@ export default function Chat() {
           },
         ]);
 
-        // 👀 mark as seen
+        // 👀 SEEN
         socket.emit("seen_message", {
           messageId: data.messageId,
           senderId: data.senderId,
@@ -54,32 +55,43 @@ export default function Chat() {
       );
     };
 
+    // ✍️ TYPING
+    const handleTyping = (data) => {
+      if (data.senderId === userId) {
+        setTyping(true);
+
+        setTimeout(() => setTyping(false), 2000);
+      }
+    };
+
     socket.on("getUsers", handleUsers);
     socket.on("receive_message", handleReceive);
     socket.on("message_status", handleStatus);
+    socket.on("typing", handleTyping);
 
     return () => {
       socket.off("getUsers", handleUsers);
       socket.off("receive_message", handleReceive);
       socket.off("message_status", handleStatus);
+      socket.off("typing", handleTyping);
     };
   }, [currentUser, userId]);
 
-  // ================= FETCH OLD MESSAGES ================= //
+  // ================= FETCH OLD ================= //
   useEffect(() => {
     const fetchMessages = async () => {
       try {
         const res = await api.get(`/conversation/${userId}`);
         setMessages(res.data.messages || []);
       } catch (err) {
-        console.log("Fetch error", err);
+        console.log(err);
       }
     };
 
     if (userId) fetchMessages();
   }, [userId]);
 
-  // ================= SEND MESSAGE ================= //
+  // ================= SEND ================= //
   const sendMessage = async () => {
     if (!text.trim()) return;
 
@@ -92,11 +104,10 @@ export default function Chat() {
       status: "sent",
     };
 
-    // 🔥 UI instant
     setMessages((prev) => [...prev, tempMsg]);
     setText("");
 
-    // 🔥 SOCKET SEND
+    // 🔥 SOCKET
     socket.emit("send_message", {
       senderId: currentUser._id,
       receiverId: userId,
@@ -110,18 +121,31 @@ export default function Chat() {
         text,
       });
 
-      // 🔥 replace temp with DB message
+      const realMsg = res.data.message;
+
+      // 🔥 replace temp msg
       setMessages((prev) =>
         prev.map((m) =>
-          m._id === tempId ? res.data.message : m
+          m._id === tempId ? realMsg : m
         )
       );
+
     } catch (err) {
-      console.log("Send error", err);
+      console.log(err);
     }
   };
 
-  // ================= ONLINE CHECK FIX ================= //
+  // ================= TYPING SEND ================= //
+  const handleTyping = (e) => {
+    setText(e.target.value);
+
+    socket.emit("typing", {
+      senderId: currentUser._id,
+      receiverId: userId,
+    });
+  };
+
+  // ================= ONLINE ================= //
   const isOnline = onlineUsers.some(
     (u) => u.userId.toString() === userId.toString()
   );
@@ -131,10 +155,24 @@ export default function Chat() {
     <div className="min-h-screen bg-black text-white flex flex-col">
 
       {/* HEADER */}
-      <div className="p-3 border-b">
-        <h2>
-          {isOnline ? "🟢 Online" : "⚫ Offline"}
-        </h2>
+      <div className="p-3 border-b flex items-center gap-2">
+        <span
+          className={`w-2 h-2 rounded-full ${
+            isOnline ? "bg-green-500" : "bg-gray-500"
+          }`}
+        ></span>
+
+        <div>
+          <p className="text-sm">
+            {isOnline ? "Online" : "Offline"}
+          </p>
+
+          {typing && (
+            <p className="text-xs text-green-400">
+              typing...
+            </p>
+          )}
+        </div>
       </div>
 
       {/* MESSAGES */}
@@ -144,34 +182,56 @@ export default function Chat() {
             msg.sender?.toString() === currentUser._id.toString();
 
           return (
-            <div key={msg._id} className={isMe ? "text-right" : ""}>
-              <div className="inline-block bg-gray-700 p-2 rounded">
-                {msg.text}
-              </div>
+            <div
+              key={msg._id}
+              className={`flex ${
+                isMe ? "justify-end" : "justify-start"
+              }`}
+            >
+              <div
+                className={`max-w-xs px-3 py-2 rounded-lg ${
+                  isMe
+                    ? "bg-green-600 rounded-br-none"
+                    : "bg-gray-700 rounded-bl-none"
+                }`}
+              >
+                <p>{msg.text}</p>
 
-              {/* STATUS */}
-              {isMe && (
-                <div className="text-xs">
-                  {msg.status === "sent" && "✔"}
-                  {msg.status === "delivered" && "✔✔"}
-                  {msg.status === "seen" && "✔✔👀"}
-                </div>
-              )}
+                {isMe && (
+                  <div className="text-[10px] text-right mt-1">
+
+                    {msg.status === "sent" && "✔"}
+
+                    {msg.status === "delivered" && "✔✔"}
+
+                    {msg.status === "seen" && (
+                      <span className="text-blue-400">
+                        ✔✔
+                      </span>
+                    )}
+
+                  </div>
+                )}
+              </div>
             </div>
           );
         })}
       </div>
 
       {/* INPUT */}
-      <div className="flex p-2">
+      <div className="flex p-2 border-t border-gray-800">
         <input
           value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Type..."
-          className="flex-1 bg-gray-800 p-2 outline-none"
+          onChange={handleTyping}
+          placeholder="Type a message..."
+          className="flex-1 bg-gray-800 p-2 rounded-l outline-none"
         />
-        <button onClick={sendMessage}>
-          <Send />
+
+        <button
+          onClick={sendMessage}
+          className="bg-green-600 px-4 rounded-r"
+        >
+          <Send size={18} />
         </button>
       </div>
     </div>
