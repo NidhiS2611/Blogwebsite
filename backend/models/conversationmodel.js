@@ -27,4 +27,5 @@ const conversationSchema = new mongoose.Schema(
 // 🔥 same 2 users ke liye duplicate conversation na bane
 conversationSchema.index({ members: 1 });
 
-export default mongoose.model("Conversation", conversationSchema);
+const Conversation = mongoose.model("Conversation", conversationSchema);
+module.exports = Conversation;
