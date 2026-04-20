@@ -12,12 +12,10 @@ const Message = require('./models/Messagemodel');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 
-// Connect Databa
+// Database Connect
 
-// Server Setup
 const server = http.createServer(app);
 
-// Socket.io Setup
 const io = new Server(server, {
   cors: {
     origin: 'https://blogwebsite-pi-silk.vercel.app',
@@ -25,7 +23,6 @@ const io = new Server(server, {
   },
 });
 
-// Middleware
 app.use(passport.initialize());
 app.use(cors({
   origin: 'https://blogwebsite-pi-silk.vercel.app',
@@ -69,40 +66,39 @@ io.on("connection", async (socket) => {
   const userId = socket.handshake.auth?.userId;
   if (userId) {
     addUser(userId, socket.id);
-    await User.findByIdAndUpdate(userId, { isOnline: true, lastSeen: null });
+    await User.findByIdAndUpdate(userId, { isOnline: true });
     io.emit("getUsers", users);
   }
 
   // SEND MESSAGE
   socket.on("send_message", async (data) => {
     const { senderId, receiverId, text, messageId: tempId } = data;
+    const receiver = getUser(receiverId);
+    
+    // Status Logic: Agar online hai toh delivered, varna sent
+    const status = receiver ? "delivered" : "sent";
 
     try {
-      // 1. Save to DB first
       const newMessage = await Message.create({
         sender: senderId,
         receiver: receiverId,
         text: text,
-        status: getUser(receiverId) ? "delivered" : "sent"
+        status: status
       });
 
-      // 2. Emit to Receiver
-      const receiver = getUser(receiverId);
+      // Receiver ko message bhejo (agar online hai)
       if (receiver) {
         io.to(receiver.socketId).emit("receive_message", {
-          senderId,
-          receiverId,
-          text,
-          messageId: newMessage._id,
-          status: newMessage.status,
+          ...newMessage.toObject(),
+          senderId // Frontend ke liye convenience
         });
       }
 
-      // 3. Confirm to Sender with original tempId to replace UI
+      // Sender ko original tempId ke saath update bhejo taaki UI update ho sake
       io.to(socket.id).emit("message_status", {
+        tempId: tempId,
         messageId: newMessage._id,
-        status: newMessage.status,
-        tempId: tempId // Frontend mein isse match karke replace karna
+        status: status
       });
     } catch (err) {
       console.error("Socket Send Error:", err);
@@ -111,10 +107,16 @@ io.on("connection", async (socket) => {
 
   // SEEN MESSAGE
   socket.on("seen_message", async ({ messageId, senderId }) => {
-    await Message.findByIdAndUpdate(messageId, { status: "seen", seenAt: new Date() });
+    // DB mein status seen karo
+    const updatedMsg = await Message.findByIdAndUpdate(messageId, { status: "seen" }, { new: true });
+    
+    // Sender ko notify karo ki message read ho gaya hai
     const sender = getUser(senderId);
     if (sender) {
-      io.to(sender.socketId).emit("message_status", { messageId, status: "seen" });
+      io.to(sender.socketId).emit("message_status", { 
+        messageId: updatedMsg._id, 
+        status: "seen" 
+      });
     }
   });
 
