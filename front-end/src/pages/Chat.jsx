@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import { Send } from "lucide-react";
 import { useAuth } from "../context/Authcontext";
 import api from "../services/Axiosinstance";
-import { socket } from "../socket";
+import { socket } from "../socket.js";
 
 export default function Chat() {
   const { user: currentUser } = useAuth();

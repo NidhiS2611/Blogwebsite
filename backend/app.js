@@ -16,7 +16,7 @@ const cookieParser = require('cookie-parser');
 const cors = require('cors');
 
 // 🔥 DB CONNECT
-connectDB();
+
 
 // 🔥 CREATE SERVER
 const server = http.createServer(app);
