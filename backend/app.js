@@ -1,29 +1,23 @@
 const express = require('express');
 const app = express();
 const path = require('path');
-
 const http = require('http');
 const { Server } = require('socket.io');
-
 const passport = require('passport');
 require('./utils/passport');
-
 require('dotenv').config();
 const connectDB = require('./config/mongooseconnect');
-
 const User = require('./models/usermodel');
-const Message = require('./models/Messagemodel'); // 🔥 IMPORTANT
-
+const Message = require('./models/Messagemodel');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 
-// ================= DB CONNECT ================= //
+// Connect Databa
 
-
-// ================= SERVER ================= //
+// Server Setup
 const server = http.createServer(app);
 
-// ================= SOCKET ================= //
+// Socket.io Setup
 const io = new Server(server, {
   cors: {
     origin: 'https://blogwebsite-pi-silk.vercel.app',
@@ -31,7 +25,7 @@ const io = new Server(server, {
   },
 });
 
-// ================= MIDDLEWARE ================= //
+// Middleware
 app.use(passport.initialize());
 app.use(cors({
   origin: 'https://blogwebsite-pi-silk.vercel.app',
@@ -42,30 +36,19 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 
-// ================= ROUTES ================= //
-const userRoutes = require('./route/userroutes');
-const blogRoutes = require('./route/blogroutes');
-const commentRoutes = require('./route/commentroute');
-const notificationRoutes = require('./route/notificationroutes');
-const authRoutes = require('./route/goggleroutes');
-const conversationRoutes = require('./route/conversationroute');
+// Routes
+app.use('/conversation', require('./route/conversationroute'));
+app.use('/comment', require('./route/commentroute'));
+app.use('/notification', require('./route/notificationroutes'));
+app.use('/auth', require('./route/goggleroutes'));
+app.use('/blog', require('./route/blogroutes'));
+app.use('/user', require('./route/userroutes'));
 
-app.use('/conversation', conversationRoutes);
-app.use('/comment', commentRoutes);
-app.use('/notification', notificationRoutes);
-app.use('/auth', authRoutes);
-app.use('/blog', blogRoutes);
-app.use('/user', userRoutes);
-
-// ================= SOCKET USERS ================= //
+// Socket State
 let users = [];
 
-// ✅ ADD USER
 const addUser = (userId, socketId) => {
-  const existing = users.find(
-    (u) => u.userId.toString() === userId.toString()
-  );
-
+  const existing = users.find((u) => u.userId.toString() === userId.toString());
   if (existing) {
     existing.socketId = socketId;
   } else {
@@ -73,119 +56,80 @@ const addUser = (userId, socketId) => {
   }
 };
 
-// ✅ REMOVE USER
 const removeUser = (socketId) => {
   users = users.filter((u) => u.socketId !== socketId);
 };
 
-// ✅ GET USER
-const getUser = (userId) => {
-  return users.find(
-    (u) => u.userId.toString() === userId.toString()
-  );
-};
+const getUser = (userId) => users.find((u) => u.userId.toString() === userId.toString());
 
-// ================= SOCKET CONNECTION ================= //
+// Socket Connection
 io.on("connection", async (socket) => {
   console.log("🟢 Connected:", socket.id);
 
   const userId = socket.handshake.auth?.userId;
-
   if (userId) {
     addUser(userId, socket.id);
-
-    // ✅ DB → ONLINE
-    await User.findByIdAndUpdate(userId, {
-      isOnline: true,
-      lastSeen: null,
-    });
-
-    console.log("🔥 user online:", userId);
+    await User.findByIdAndUpdate(userId, { isOnline: true, lastSeen: null });
+    io.emit("getUsers", users);
   }
 
-  // 🔥 broadcast users
-  io.emit("getUsers", users);
-
-  // ================= SEND MESSAGE ================= //
+  // SEND MESSAGE
   socket.on("send_message", async (data) => {
-    const { senderId, receiverId, text, messageId } = data;
+    const { senderId, receiverId, text, messageId: tempId } = data;
 
-    console.log("📩 message:", data);
-
-    const receiver = getUser(receiverId);
-
-    let status = "sent";
-
-    if (receiver) {
-      status = "delivered";
-    }
-
-    // 🔥 DB UPDATE
-    await Message.findByIdAndUpdate(messageId, {
-      status,
-    });
-
-    if (receiver) {
-      io.to(receiver.socketId).emit("receive_message", {
-        senderId,
-        receiverId,
-        text,
-        messageId,
-        status,
+    try {
+      // 1. Save to DB first
+      const newMessage = await Message.create({
+        sender: senderId,
+        receiver: receiverId,
+        text: text,
+        status: getUser(receiverId) ? "delivered" : "sent"
       });
-    }
 
-    // 🔥 sender ko update
-    io.to(socket.id).emit("message_status", {
-      messageId,
-      status,
-    });
+      // 2. Emit to Receiver
+      const receiver = getUser(receiverId);
+      if (receiver) {
+        io.to(receiver.socketId).emit("receive_message", {
+          senderId,
+          receiverId,
+          text,
+          messageId: newMessage._id,
+          status: newMessage.status,
+        });
+      }
+
+      // 3. Confirm to Sender with original tempId to replace UI
+      io.to(socket.id).emit("message_status", {
+        messageId: newMessage._id,
+        status: newMessage.status,
+        tempId: tempId // Frontend mein isse match karke replace karna
+      });
+    } catch (err) {
+      console.error("Socket Send Error:", err);
+    }
   });
 
-  // ================= SEEN MESSAGE ================= //
+  // SEEN MESSAGE
   socket.on("seen_message", async ({ messageId, senderId }) => {
-    console.log("👀 seen:", messageId);
-
-    // 🔥 DB UPDATE
-    await Message.findByIdAndUpdate(messageId, {
-      status: "seen",
-      seenAt: new Date(),
-    });
-
+    await Message.findByIdAndUpdate(messageId, { status: "seen", seenAt: new Date() });
     const sender = getUser(senderId);
-
     if (sender) {
-      io.to(sender.socketId).emit("message_status", {
-        messageId,
-        status: "seen",
-      });
+      io.to(sender.socketId).emit("message_status", { messageId, status: "seen" });
     }
   });
 
-  // ================= DISCONNECT ================= //
+  // DISCONNECT
   socket.on("disconnect", async () => {
-    console.log("🔴 Disconnected:", socket.id);
-
     const user = users.find((u) => u.socketId === socket.id);
-
     if (user) {
-      await User.findByIdAndUpdate(user.userId, {
-        isOnline: false,
-        lastSeen: new Date(),
-      });
-
-      console.log("❌ user offline:", user.userId);
+      await User.findByIdAndUpdate(user.userId, { isOnline: false, lastSeen: new Date() });
+      removeUser(socket.id);
+      io.emit("getUsers", users);
     }
-
-    removeUser(socket.id);
-
-    io.emit("getUsers", users);
   });
 });
 
-// ================= START ================= //
 const PORT = process.env.PORT || 3000;
-
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
