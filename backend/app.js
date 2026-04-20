@@ -183,15 +183,7 @@ io.on("connection", async (socket) => {
   });
 });
 // TYPING
-socket.on("typing", (data) => {
-  const receiver = getUser(data.receiverId);
 
-  if (receiver) {
-    io.to(receiver.socketId).emit("typing", {
-      senderId: data.senderId,
-    });
-  }
-});
 
 // ================= START ================= //
 const PORT = process.env.PORT || 3000;
