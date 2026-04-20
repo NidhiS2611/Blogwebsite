@@ -10,18 +10,18 @@ require('./utils/passport');
 
 require('dotenv').config();
 const connectDB = require('./config/mongooseconnect');
-const User = require('./models/usermodel'); // 🔥 IMPORTANT
+const User = require('./models/usermodel');
 
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 
-// 🔥 DB connect
+// 🔥 DB CONNECT
+connectDB();
 
-
-// 🔥 create server
+// 🔥 CREATE SERVER
 const server = http.createServer(app);
 
-// 🔥 socket setup
+// 🔥 SOCKET SETUP
 const io = new Server(server, {
   cors: {
     origin: 'https://blogwebsite-pi-silk.vercel.app',
@@ -29,7 +29,7 @@ const io = new Server(server, {
   },
 });
 
-// 🔥 middleware
+// 🔥 MIDDLEWARE
 app.use(passport.initialize());
 app.use(cors({
   origin: 'https://blogwebsite-pi-silk.vercel.app',
@@ -40,7 +40,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 
-// 🔥 routes
+// 🔥 ROUTES
 const userRoutes = require('./route/userroutes');
 const blogRoutes = require('./route/blogroutes');
 const commentRoutes = require('./route/commentroute');
@@ -51,7 +51,6 @@ const messageRoutes = require('./route/messageroute');
 
 app.use('/conversation', conversationRoutes);
 app.use('/message', messageRoutes);
-
 app.use('/comment', commentRoutes);
 app.use('/notification', notificationRoutes);
 app.use('/auth', authRoutes);
@@ -62,7 +61,7 @@ app.use('/user', userRoutes);
 
 let users = [];
 
-// ✅ add/update user
+// ✅ ADD / UPDATE USER
 const addUser = (userId, socketId) => {
   const existing = users.find(
     (u) => u.userId.toString() === userId.toString()
@@ -75,12 +74,12 @@ const addUser = (userId, socketId) => {
   }
 };
 
-// ✅ remove user
+// ✅ REMOVE USER
 const removeUser = (socketId) => {
   users = users.filter((u) => u.socketId !== socketId);
 };
 
-// ✅ get user
+// ✅ GET USER
 const getUser = (userId) => {
   return users.find(
     (u) => u.userId.toString() === userId.toString()
@@ -95,10 +94,10 @@ io.on("connection", async (socket) => {
   const userId = socket.handshake.auth?.userId;
 
   if (userId) {
-    // ✅ map user
+    // 🔥 add user in memory
     addUser(userId, socket.id);
 
-    // ✅ DB update → ONLINE
+    // 🔥 DB → ONLINE
     await User.findByIdAndUpdate(userId, {
       isOnline: true,
       lastSeen: null,
@@ -107,7 +106,7 @@ io.on("connection", async (socket) => {
     console.log("🔥 user online:", userId);
   }
 
-  // 🔥 broadcast online users
+  // 🔥 SEND ONLINE USERS LIST
   io.emit("getUsers", users);
 
   // ================= SEND MESSAGE ================= //
@@ -118,14 +117,42 @@ io.on("connection", async (socket) => {
     const receiver = getUser(data.receiverId);
 
     if (receiver) {
-      // ✅ send only to receiver
+      // ✅ RECEIVER ONLINE → DELIVERED
       io.to(receiver.socketId).emit("receive_message", {
         senderId: data.senderId,
         receiverId: data.receiverId,
         text: data.text,
+        messageId: data.messageId,
+        status: "delivered",
       });
+
+      // 🔥 sender ko update (double tick)
+      io.to(socket.id).emit("message_status", {
+        messageId: data.messageId,
+        status: "delivered",
+      });
+
     } else {
+      // ❌ RECEIVER OFFLINE → SENT
+      io.to(socket.id).emit("message_status", {
+        messageId: data.messageId,
+        status: "sent",
+      });
+
       console.log("⚠️ Receiver offline:", data.receiverId);
+    }
+  });
+
+  // ================= SEEN MESSAGE ================= //
+
+  socket.on("seen_message", ({ messageId, senderId }) => {
+    const sender = getUser(senderId);
+
+    if (sender) {
+      io.to(sender.socketId).emit("message_status", {
+        messageId,
+        status: "seen",
+      });
     }
   });
 
@@ -134,10 +161,10 @@ io.on("connection", async (socket) => {
   socket.on("disconnect", async () => {
     console.log("🔴 Disconnected:", socket.id);
 
-    const user = users.find(u => u.socketId === socket.id);
+    const user = users.find((u) => u.socketId === socket.id);
 
     if (user) {
-      // ✅ DB update → OFFLINE
+      // 🔥 DB → OFFLINE
       await User.findByIdAndUpdate(user.userId, {
         isOnline: false,
         lastSeen: new Date(),
@@ -148,7 +175,7 @@ io.on("connection", async (socket) => {
 
     removeUser(socket.id);
 
-    // 🔥 update online users list
+    // 🔥 UPDATE ONLINE USERS
     io.emit("getUsers", users);
   });
 });

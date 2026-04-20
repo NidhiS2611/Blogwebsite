@@ -1,14 +1,14 @@
-
 import { useEffect, Suspense, lazy } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+
 import Notificationlistener from "./component/Notificationlisner.jsx";
 import Homelayout from "./layout/Homelayout ";
 import AuthLanding from "./pages/Authlandingpage.jsx";
 import Forgotpasswordflow from "./pages/Forgotpasswordflow.jsx";
 import Chat from "./pages/Chat.jsx";
-import { useAuth } from "./context/Authcontext";
-import { socket } from "./server";
 
+import { useAuth } from "./context/Authcontext";
+import { socket } from "./socket"; // ✅ FIXED
 
 // 🔥 Lazy Pages
 const Home = lazy(() => import("./pages/Home"));
@@ -32,15 +32,17 @@ const Notificationpage = lazy(() =>
 );
 
 function App() {
+
+  const { user } = useAuth(); // ✅ hook top pe
+
+  // 🔔 Notification + SW
   useEffect(() => {
-    // 🔔 Notification permission
     if ("Notification" in window) {
       Notification.requestPermission().then((permission) => {
         console.log("🔔 Notification Permission:", permission);
       });
     }
 
-    // 🟢 Service Worker
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker
         .register("/firebase-messaging-sw.js")
@@ -49,37 +51,45 @@ function App() {
     }
   }, []);
 
-    const { user } = useAuth();
-
+  // ================= SOCKET CONNECT ================= //
   useEffect(() => {
-    
-  if (!user?._id) return;
+    if (!user?._id) return;
 
-  socket.auth = {
-    userId: user._id,
-  };
+    // 🔥 auth pass karo
+    socket.auth = {
+      userId: user._id,
+    };
 
-  socket.connect(); // 🔥 yaha connect hoga
+    // 🔥 connect karo (autoConnect false hai)
+    socket.connect();
 
-  socket.on("connect", () => {
-    console.log("🟢 Connected:", socket.id);
-  });
+    // 🟢 CONNECT
+    const onConnect = () => {
+      console.log("🟢 Connected:", socket.id);
+    };
 
-  socket.on("connect_error", (err) => {
-    console.log("❌ Error:", err.message);
-  });
+    // ❌ ERROR
+    const onError = (err) => {
+      console.log("❌ Socket Error:", err.message);
+    };
 
-  return () => {
-    socket.off("connect");
-    socket.off("connect_error");
-  };
-}, [user]);
+    socket.on("connect", onConnect);
+    socket.on("connect_error", onError);
 
+    return () => {
+      socket.off("connect", onConnect);
+      socket.off("connect_error", onError);
+
+      // ⚠️ optional: disconnect mat kar agar pura app me use ho raha
+      // socket.disconnect();
+    };
+  }, [user]);
+
+  // ================= UI ================= //
   return (
     <Router>
       <Notificationlistener />
 
-      {/* 🔥 Suspense WRAPPER */}
       <Suspense
         fallback={
           <div className="min-h-screen flex items-center justify-center text-lg font-semibold">
@@ -95,11 +105,12 @@ function App() {
           <Route path="/" element={<AuthLanding />} />
           <Route path="/forgot-password" element={<Forgotpasswordflow />} />
 
+          {/* Chat */}
           <Route path="/chat" element={<Chat />} />
+
           {/* Layout */}
           <Route element={<Homelayout />}>
             <Route path="/home" element={<Home />} />
-          
             <Route path="blog/:id" element={<Blogdetails />} />
             <Route path="createblog" element={<Createblog />} />
             <Route path="explore" element={<Explore />} />
@@ -113,7 +124,7 @@ function App() {
               path="settings/account"
               element={<Accountsetting />}
             />
-              <Route path="settings/danger-zone" element={<DangerZone />} />
+            <Route path="settings/danger-zone" element={<DangerZone />} />
             <Route path="bookmarks" element={<Bookmarks />} />
           </Route>
         </Routes>
