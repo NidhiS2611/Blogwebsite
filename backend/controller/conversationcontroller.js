@@ -1,25 +1,28 @@
 const Conversation = require("../models/conversationmodel");
 const Message = require("../models/Messagemodel");
-const { getUser } = require("../server"); // 🔥 Directly import karo
 
 const sendMessage = async (req, res) => {
   try {
     const { receiverId, text } = req.body;
     const senderId = req.user.id;
 
-    // 1. Conversation
-    let conversation = await Conversation.findOne({ members: { $all: [senderId, receiverId] } });
+    // 1. Conversation find/create
+    let conversation = await Conversation.findOne({
+      members: { $all: [senderId, receiverId] },
+    });
+
     if (!conversation) {
-      conversation = await Conversation.create({ members: [senderId, receiverId] });
+      conversation = await Conversation.create({
+        members: [senderId, receiverId],
+      });
     }
 
-    // 2. Message Save (Status 'sent' ke saath)
+    // 2. Message save (Status default "sent" rahega)
     const message = await Message.create({
       conversationId: conversation._id,
       sender: senderId,
       receiver: receiverId,
       text,
-      
     });
 
     // 3. Update conversation
@@ -29,25 +32,24 @@ const sendMessage = async (req, res) => {
 
     // 4. SOCKET LOGIC
     const io = req.app.get("io");
+    const getUser = req.app.get("getUser");
     const receiver = getUser(receiverId);
 
     if (receiver) {
-      // Receiver Online hai -> Status 'delivered' update karo
+      // Receiver Online hai -> Status update karo
       message.status = "delivered";
-      await message.save(); // DB mein update karo
+      await message.save();
       
+      // Pura message object bhej, jisme status "delivered" hai
       io.to(receiver.socketId).emit("receive_message", message);
-      
-      // Sender ko bhi update bhejo ki deliver ho gaya
-      io.to(req.user.socketId).emit("message_status", { 
-        messageId: message._id, 
-        status: "delivered" 
-      });
     }
 
     res.status(200).json({ message });
+
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+module.exports = { sendMessage };
