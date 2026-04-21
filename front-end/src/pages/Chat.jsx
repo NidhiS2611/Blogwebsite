@@ -121,7 +121,7 @@ export default function Chat() {
         {messages.map((msg) => {
           const isMe = msg.sender?.toString() === currentUser._id.toString();
           return (
-            <div key={msg._id} className={isMe ? "text-right" : ""}>
+            <div key={msg.id} className={isMe ? "text-right" : ""}>
               <div className={`inline-block p-2 rounded ${isMe ? "bg-blue-600" : "bg-gray-700"}`}>
                 {msg.text}
               </div>
