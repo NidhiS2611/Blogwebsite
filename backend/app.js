@@ -29,7 +29,7 @@ const io = new Server(server, {
   },
 });
 app.set("io", io)
-app.set("getUser", getUser);
+
 
 // 🔥 MIDDLEWARE
 app.use(passport.initialize());
@@ -109,6 +109,7 @@ io.on("connection", async (socket) => {
 
   // 🔥 SEND ONLINE USERS LIST
   io.emit("getUsers", users);
+  app.set("getUser", getUser); // Make getUser available in routes via req.app.get("getUser")
 
   // ================= SEND MESSAGE ================= //
 
