@@ -20,9 +20,9 @@ export default function Chat() {
 
     const handleUsers = (users) => setOnlineUsers(users);
 
-    // 📩 RECEIVE MESSAGE (Backend se aane wala message)
+    // 📩 RECEIVE MESSAGE
     const handleReceive = (data) => {
-      // Check if message belongs to this conversation
+      // Backend se jo message aayega, usme 'data.sender' hoga
       if (data.sender.toString() === userId.toString()) {
         setMessages((prev) => [...prev, data]);
       }
@@ -46,6 +46,23 @@ export default function Chat() {
     };
   }, [currentUser, userId]);
 
+  // ================= SEEN LOGIC ================= //
+  useEffect(() => {
+    messages.forEach((msg) => {
+      // Sirf receiver ke aaye huye messages ko mark karo
+      if (
+        msg.sender?.toString() !== currentUser._id.toString() &&
+        msg.status !== "seen" &&
+        typeof msg._id === "string" // Real MongoDB ID check
+      ) {
+        socket.emit("seen_message", {
+          messageId: msg._id,
+          senderId: msg.sender,
+        });
+      }
+    });
+  }, [messages, currentUser._id]);
+
   // ================= FETCH OLD MESSAGES ================= //
   useEffect(() => {
     const fetchMessages = async () => {
@@ -63,7 +80,8 @@ export default function Chat() {
   const sendMessage = async () => {
     if (!text.trim()) return;
 
-    const tempId = Date.now(); // Temp ID for instant UI update
+    // 1. Instant UI update (Temp ID)
+    const tempId = Date.now();
     const tempMsg = {
       _id: tempId,
       sender: currentUser._id,
@@ -75,19 +93,19 @@ export default function Chat() {
     setText("");
 
     try {
-      // API call to save to DB
+      // 2. API se message bhejo
       const res = await api.post("/conversation/send", {
         receiverId: userId,
         text,
       });
 
-      // 🔥 SYNC: Temp ID ko MongoDB ki REAL '_id' se replace karo
+      // 3. 🔥 SYNC: Temp ID ko DB wali REAL ID se replace karo
       setMessages((prev) =>
         prev.map((m) => (m._id === tempId ? res.data.message : m))
       );
     } catch (err) {
       console.log("Send error", err);
-      setMessages((prev) => prev.filter((m) => m._id !== tempId)); // Error par delete
+      setMessages((prev) => prev.filter((m) => m._id !== tempId));
     }
   };
 
@@ -95,12 +113,10 @@ export default function Chat() {
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
-      {/* HEADER */}
-      <div className="p-3 border-b">
+      <div className="p-3 border-b border-gray-800">
         <h2>{isOnline ? "🟢 Online" : "⚫ Offline"}</h2>
       </div>
 
-      {/* MESSAGES */}
       <div className="flex-1 p-3 space-y-2 overflow-y-auto">
         {messages.map((msg) => {
           const isMe = msg.sender?.toString() === currentUser._id.toString();
@@ -121,16 +137,15 @@ export default function Chat() {
         })}
       </div>
 
-      {/* INPUT */}
-      <div className="flex p-2">
+      <div className="flex p-2 border-t border-gray-800">
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Type..."
-          className="flex-1 bg-gray-800 p-2 outline-none"
+          className="flex-1 bg-gray-800 p-2 outline-none rounded"
         />
-        <button onClick={sendMessage} className="p-2 bg-blue-600">
-          <Send />
+        <button onClick={sendMessage} className="p-2 bg-blue-600 rounded ml-2">
+          <Send size={20} />
         </button>
       </div>
     </div>

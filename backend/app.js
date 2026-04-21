@@ -14,6 +14,7 @@ const User = require('./models/usermodel');
 
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
+const Message = require('./models/Messagemodel');
 
 // 🔥 DB CONNECT
 
@@ -147,16 +148,20 @@ io.on("connection", async (socket) => {
 
   // ================= SEEN MESSAGE ================= //
 
-  socket.on("seen_message", ({ messageId, senderId }) => {
-    const sender = getUser(senderId);
+// server.js ke andar ye change kar
+socket.on("seen_message", async ({ messageId, senderId }) => {
+  // 🔥 1. DB mein status update karo (Taaki reload ke baad bhi seen dikhe)
+  await Message.findByIdAndUpdate(messageId, { status: "seen" });
 
-    if (sender) {
-      io.to(sender.socketId).emit("message_status", {
-        messageId,
-        status: "seen",
-      });
-    }
-  });
+  // 2. Sender ko inform karo
+  const sender = getUser(senderId);
+  if (sender) {
+    io.to(sender.socketId).emit("message_status", {
+      messageId,
+      status: "seen",
+    });
+  }
+});
 
   // ================= DISCONNECT ================= //
 

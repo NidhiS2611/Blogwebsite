@@ -37,8 +37,11 @@ const sendMessage = async (req, res) => {
 
     if (receiver) {
       // Receiver Online hai -> Status update karo
-      message.status = "delivered";
-      await message.save();
+      message = await Message.findByIdAndUpdate(
+        message._id, 
+        { status: "delivered" }, 
+        { new: true } // new: true se updated object wapas milega
+      );
       
       // Pura message object bhej, jisme status "delivered" hai
       io.to(receiver.socketId).emit("receive_message", message);
