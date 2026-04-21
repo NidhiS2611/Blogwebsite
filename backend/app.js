@@ -1,188 +1,60 @@
 const express = require('express');
 const app = express();
-const path = require('path');
-
 const http = require('http');
 const { Server } = require('socket.io');
-
-const passport = require('passport');
-require('./utils/passport');
-
-require('dotenv').config();
-const connectDB = require('./config/mongooseconnect');
-const User = require('./models/usermodel');
-
+const path = require('path');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
+const User = require('./models/usermodel');
+const Message = require('./models/Messagemodel'); // Apna model path check kar lena
 
-// 🔥 DB CONNECT
-
-
-// 🔥 CREATE SERVER
 const server = http.createServer(app);
 
-// 🔥 SOCKET SETUP
 const io = new Server(server, {
-  cors: {
-    origin: 'https://blogwebsite-pi-silk.vercel.app',
-    credentials: true,
-  },
+  cors: { origin: 'https://blogwebsite-pi-silk.vercel.app', credentials: true },
 });
 
-// 🔥 MIDDLEWARE
-app.use(passport.initialize());
-app.use(cors({
-  origin: 'https://blogwebsite-pi-silk.vercel.app',
-  credentials: true,
-}));
+// 🔥 BRIDGE FOR CONTROLLER
+app.set("io", io);
+
+// Middlewares & Routes (Same as your code)
+app.use(cors({ origin: 'https://blogwebsite-pi-silk.vercel.app', credentials: true }));
 app.use(cookieParser());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 
-// 🔥 ROUTES
-const userRoutes = require('./route/userroutes');
-const blogRoutes = require('./route/blogroutes');
-const commentRoutes = require('./route/commentroute');
-const notificationRoutes = require('./route/notificationroutes');
-const authRoutes = require('./route/goggleroutes');
-const conversationRoutes = require('./route/conversationroute');
-
-
-app.use('/conversation', conversationRoutes);
-app.use('/comment', commentRoutes);
-app.use('/notification', notificationRoutes);
-app.use('/auth', authRoutes);
-app.use('/blog', blogRoutes);
-app.use('/user', userRoutes);
-
-// ================= SOCKET LOGIC ================= //
-
+// SOCKET LOGIC
 let users = [];
-
-// ✅ ADD / UPDATE USER
 const addUser = (userId, socketId) => {
-  const existing = users.find(
-    (u) => u.userId.toString() === userId.toString()
-  );
-
-  if (existing) {
-    existing.socketId = socketId;
-  } else {
-    users.push({ userId, socketId });
-  }
+  const existing = users.find((u) => u.userId.toString() === userId.toString());
+  existing ? (existing.socketId = socketId) : users.push({ userId, socketId });
 };
-
-// ✅ REMOVE USER
-const removeUser = (socketId) => {
-  users = users.filter((u) => u.socketId !== socketId);
-};
-
-// ✅ GET USER
-const getUser = (userId) => {
-  return users.find(
-    (u) => u.userId.toString() === userId.toString()
-  );
-};
-
-// ================= SOCKET CONNECTION ================= //
+const removeUser = (socketId) => { users = users.filter((u) => u.socketId !== socketId); };
+const getUser = (userId) => users.find((u) => u.userId.toString() === userId.toString());
 
 io.on("connection", async (socket) => {
-  console.log("🟢 Connected:", socket.id);
-
   const userId = socket.handshake.auth?.userId;
-
   if (userId) {
-    // 🔥 add user in memory
     addUser(userId, socket.id);
-
-    // 🔥 DB → ONLINE
-    await User.findByIdAndUpdate(userId, {
-      isOnline: true,
-      lastSeen: null,
-    });
-
-    console.log("🔥 user online:", userId);
+    await User.findByIdAndUpdate(userId, { isOnline: true, lastSeen: null });
+    io.emit("getUsers", users);
   }
 
-  // 🔥 SEND ONLINE USERS LIST
-  io.emit("getUsers", users);
-
-  // ================= SEND MESSAGE ================= //
-
-  socket.on("send_message", (data) => {
-    console.log("📩 message:", data);
-
-    const receiver = getUser(data.receiverId);
-
-    if (receiver) {
-      // ✅ RECEIVER ONLINE → DELIVERED
-      io.to(receiver.socketId).emit("receive_message", {
-        senderId: data.senderId,
-        receiverId: data.receiverId,
-        text: data.text,
-        messageId: data.messageId,
-        status: "delivered",
-      });
-
-      // 🔥 sender ko update (double tick)
-      io.to(socket.id).emit("message_status", {
-        messageId: data.messageId,
-        status: "delivered",
-      });
-
-    } else {
-      // ❌ RECEIVER OFFLINE → SENT
-      io.to(socket.id).emit("message_status", {
-        messageId: data.messageId,
-        status: "sent",
-      });
-
-      console.log("⚠️ Receiver offline:", data.receiverId);
-    }
-  });
-
-  // ================= SEEN MESSAGE ================= //
-
-  socket.on("seen_message", ({ messageId, senderId }) => {
+  socket.on("seen_message", async ({ messageId, senderId }) => {
+    await Message.findByIdAndUpdate(messageId, { status: "seen" });
     const sender = getUser(senderId);
-
-    if (sender) {
-      io.to(sender.socketId).emit("message_status", {
-        messageId,
-        status: "seen",
-      });
-    }
+    if (sender) io.to(sender.socketId).emit("message_status", { messageId, status: "seen" });
   });
-
-  // ================= DISCONNECT ================= //
 
   socket.on("disconnect", async () => {
-    console.log("🔴 Disconnected:", socket.id);
-
     const user = users.find((u) => u.socketId === socket.id);
-
     if (user) {
-      // 🔥 DB → OFFLINE
-      await User.findByIdAndUpdate(user.userId, {
-        isOnline: false,
-        lastSeen: new Date(),
-      });
-
-      console.log("❌ user offline:", user.userId);
+      await User.findByIdAndUpdate(user.userId, { isOnline: false, lastSeen: new Date() });
+      removeUser(socket.id);
+      io.emit("getUsers", users);
     }
-
-    removeUser(socket.id);
-
-    // 🔥 UPDATE ONLINE USERS
-    io.emit("getUsers", users);
   });
 });
 
-// ================= START SERVER ================= //
+module.exports = { app, io, getUser }; // Export taaki controller use kar sake
 
-const PORT = process.env.PORT || 3000;
-
-server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+server.listen(3000, () => console.log("🚀 Server running on port 3000"));
