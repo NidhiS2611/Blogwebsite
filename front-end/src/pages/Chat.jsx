@@ -20,18 +20,16 @@ export default function Chat() {
 
     const handleUsers = (users) => setOnlineUsers(users);
 
-    // 📩 RECEIVE MESSAGE
     const handleReceive = (data) => {
-      // Backend se jo message aayega, usme 'data.sender' hoga
-      if (data.sender.toString() === userId.toString()) {
+      // Data aur sender check taaki app crash na ho
+      if (data?.sender?.toString() === userId.toString()) {
         setMessages((prev) => [...prev, data]);
       }
     };
 
-    // ✔ STATUS UPDATE (Delivered/Seen)
     const handleStatus = ({ messageId, status }) => {
       setMessages((prev) =>
-        prev.map((m) => (m._id === messageId ? { ...m, status } : m))
+        prev.map((m) => (m?._id === messageId ? { ...m, status } : m))
       );
     };
 
@@ -49,26 +47,21 @@ export default function Chat() {
   // ================= SEEN LOGIC ================= //
   useEffect(() => {
     messages.forEach((msg) => {
-      // Sirf receiver ke aaye huye messages ko mark karo
-      if (
-        msg.sender?.toString() !== currentUser._id.toString() &&
-        msg.status !== "seen" &&
-        typeof msg._id === "string" // Real MongoDB ID check
-      ) {
-        socket.emit("seen_message", {
-          messageId: msg._id,
-          senderId: msg.sender,
-        });
+      if (msg && msg.sender?.toString() !== currentUser._id.toString() && 
+          msg.status !== "seen" && typeof msg._id === "string") {
+        socket.emit("seen_message", { messageId: msg._id, senderId: msg.sender });
       }
     });
   }, [messages, currentUser._id]);
 
-  // ================= FETCH OLD MESSAGES ================= //
+  // ================= FETCH MESSAGES ================= //
   useEffect(() => {
     const fetchMessages = async () => {
       try {
         const res = await api.get(`/conversation/${userId}`);
-        setMessages(res.data.messages || []);
+        // Null values filter kar di hain
+        const validMessages = (res.data.messages || []).filter(m => m !== null);
+        setMessages(validMessages);
       } catch (err) {
         console.log("Fetch error", err);
       }
@@ -80,29 +73,15 @@ export default function Chat() {
   const sendMessage = async () => {
     if (!text.trim()) return;
 
-    // 1. Instant UI update (Temp ID)
     const tempId = Date.now();
-    const tempMsg = {
-      _id: tempId,
-      sender: currentUser._id,
-      text,
-      status: "sent",
-    };
+    const tempMsg = { _id: tempId, sender: currentUser._id, text, status: "sent" };
 
     setMessages((prev) => [...prev, tempMsg]);
     setText("");
 
     try {
-      // 2. API se message bhejo
-      const res = await api.post("/conversation/send", {
-        receiverId: userId,
-        text,
-      });
-
-      // 3. 🔥 SYNC: Temp ID ko DB wali REAL ID se replace karo
-      setMessages((prev) =>
-        prev.map((m) => (m._id === tempId ? res.data.message : m))
-      );
+      const res = await api.post("/conversation/send", { receiverId: userId, text });
+      setMessages((prev) => prev.map((m) => (m._id === tempId ? res.data.message : m)));
     } catch (err) {
       console.log("Send error", err);
       setMessages((prev) => prev.filter((m) => m._id !== tempId));
@@ -119,9 +98,11 @@ export default function Chat() {
 
       <div className="flex-1 p-3 space-y-2 overflow-y-auto">
         {messages.map((msg) => {
+          if (!msg) return null; // Crash se bachne ke liye
           const isMe = msg.sender?.toString() === currentUser._id.toString();
+          
           return (
-            <div key={msg.id} className={isMe ? "text-right" : ""}>
+            <div key={msg._id} className={isMe ? "text-right" : ""}>
               <div className={`inline-block p-2 rounded ${isMe ? "bg-blue-600" : "bg-gray-700"}`}>
                 {msg.text}
               </div>
