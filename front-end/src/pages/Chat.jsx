@@ -16,20 +16,23 @@ export default function Chat() {
 
   // ================= SOCKET LISTENERS ================= //
   useEffect(() => {
-    if (!currentUser?._id) return;
+    if (!currentUser?._id || !userId) return;
 
-    const handleUsers = (users) => setOnlineUsers(users);
+    const handleUsers = (users) => setOnlineUsers(users || []);
 
     const handleReceive = (data) => {
-      // Data aur sender check taaki app crash na ho
-      if (data?.sender?.toString() === userId.toString()) {
+      if (
+        data?.sender?.toString() === userId?.toString()
+      ) {
         setMessages((prev) => [...prev, data]);
       }
     };
 
     const handleStatus = ({ messageId, status }) => {
       setMessages((prev) =>
-        prev.map((m) => (m?._id === messageId ? { ...m, status } : m))
+        prev.map((m) =>
+          m?._id === messageId ? { ...m, status } : m
+        )
       );
     };
 
@@ -46,49 +49,77 @@ export default function Chat() {
 
   // ================= SEEN LOGIC ================= //
   useEffect(() => {
+    if (!currentUser?._id) return;
+
     messages.forEach((msg) => {
-      if (msg && msg.sender?.toString() !== currentUser._id.toString() && 
-          msg.status !== "seen" && typeof msg._id === "string") {
-        socket.emit("seen_message", { messageId: msg._id, senderId: msg.sender });
+      if (
+        msg &&
+        msg.sender?.toString() !== currentUser?._id?.toString() &&
+        msg.status !== "seen" &&
+        typeof msg._id === "string"
+      ) {
+        socket.emit("seen_message", {
+          messageId: msg._id,
+          senderId: msg.sender,
+        });
       }
     });
-  }, [messages, currentUser._id]);
+  }, [messages, currentUser]);
 
   // ================= FETCH MESSAGES ================= //
   useEffect(() => {
     const fetchMessages = async () => {
       try {
         const res = await api.get(`/conversation/${userId}`);
-        // Null values filter kar di hain
-        const validMessages = (res.data.messages || []).filter(m => m !== null);
+        const validMessages = (res.data.messages || []).filter(
+          (m) => m !== null
+        );
         setMessages(validMessages);
       } catch (err) {
         console.log("Fetch error", err);
       }
     };
+
     if (userId) fetchMessages();
   }, [userId]);
 
   // ================= SEND MESSAGE ================= //
   const sendMessage = async () => {
-    if (!text.trim()) return;
+    if (!text.trim() || !currentUser?._id) return;
 
     const tempId = Date.now();
-    const tempMsg = { _id: tempId, sender: currentUser._id, text, status: "sent" };
+    const tempMsg = {
+      _id: tempId,
+      sender: currentUser._id,
+      text,
+      status: "sent",
+    };
 
     setMessages((prev) => [...prev, tempMsg]);
     setText("");
 
     try {
-      const res = await api.post("/conversation/send", { receiverId: userId, text });
-      setMessages((prev) => prev.map((m) => (m._id === tempId ? res.data.message : m)));
+      const res = await api.post("/conversation/send", {
+        receiverId: userId,
+        text,
+      });
+
+      setMessages((prev) =>
+        prev.map((m) =>
+          m._id === tempId ? res.data.message : m
+        )
+      );
     } catch (err) {
       console.log("Send error", err);
-      setMessages((prev) => prev.filter((m) => m._id !== tempId));
+      setMessages((prev) =>
+        prev.filter((m) => m._id !== tempId)
+      );
     }
   };
 
-  const isOnline = onlineUsers.some((u) => u.userId.toString() === userId.toString());
+  const isOnline = onlineUsers.some(
+    (u) => u?.userId?.toString() === userId?.toString()
+  );
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
@@ -98,14 +129,22 @@ export default function Chat() {
 
       <div className="flex-1 p-3 space-y-2 overflow-y-auto">
         {messages.map((msg) => {
-          if (!msg) return null; // Crash se bachne ke liye
-          const isMe = msg.sender?.toString() === currentUser._id.toString();
-          
+          if (!msg) return null;
+
+          const isMe =
+            msg.sender?.toString() ===
+            currentUser?._id?.toString();
+
           return (
             <div key={msg._id} className={isMe ? "text-right" : ""}>
-              <div className={`inline-block p-2 rounded ${isMe ? "bg-blue-600" : "bg-gray-700"}`}>
+              <div
+                className={`inline-block p-2 rounded ${
+                  isMe ? "bg-blue-600" : "bg-gray-700"
+                }`}
+              >
                 {msg.text}
               </div>
+
               {isMe && (
                 <div className="text-xs text-gray-400">
                   {msg.status === "sent" && "✔"}
@@ -125,7 +164,10 @@ export default function Chat() {
           placeholder="Type..."
           className="flex-1 bg-gray-800 p-2 outline-none rounded"
         />
-        <button onClick={sendMessage} className="p-2 bg-blue-600 rounded ml-2">
+        <button
+          onClick={sendMessage}
+          className="p-2 bg-blue-600 rounded ml-2"
+        >
           <Send size={20} />
         </button>
       </div>
