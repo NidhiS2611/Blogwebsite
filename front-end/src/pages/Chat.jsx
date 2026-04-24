@@ -14,16 +14,16 @@ export default function Chat() {
   const [text, setText] = useState("");
   const [onlineUsers, setOnlineUsers] = useState([]);
 
-  // ================= SOCKET LISTENERS ================= //
+  const [showDelete, setShowDelete] = useState(null);
+
+  // ================= SOCKET ================= //
   useEffect(() => {
     if (!currentUser?._id || !userId) return;
 
     const handleUsers = (users) => setOnlineUsers(users || []);
 
     const handleReceive = (data) => {
-      if (
-        data?.sender?.toString() === userId?.toString()
-      ) {
+      if (data?.sender?.toString() === userId?.toString()) {
         setMessages((prev) => [...prev, data]);
       }
     };
@@ -47,7 +47,7 @@ export default function Chat() {
     };
   }, [currentUser, userId]);
 
-  // ================= SEEN LOGIC ================= //
+  // ================= SEEN ================= //
   useEffect(() => {
     if (!currentUser?._id) return;
 
@@ -66,7 +66,7 @@ export default function Chat() {
     });
   }, [messages, currentUser]);
 
-  // ================= FETCH MESSAGES ================= //
+  // ================= FETCH ================= //
   useEffect(() => {
     const fetchMessages = async () => {
       try {
@@ -83,7 +83,7 @@ export default function Chat() {
     if (userId) fetchMessages();
   }, [userId]);
 
-  // ================= SEND MESSAGE ================= //
+  // ================= SEND ================= //
   const sendMessage = async () => {
     if (!text.trim() || !currentUser?._id) return;
 
@@ -117,6 +117,11 @@ export default function Chat() {
     }
   };
 
+  // ================= UI DELETE ================= //
+  const handleDeleteUI = (id) => {
+    setMessages((prev) => prev.filter((m) => m._id !== id));
+  };
+
   const isOnline = onlineUsers.some(
     (u) => u?.userId?.toString() === userId?.toString()
   );
@@ -136,21 +141,40 @@ export default function Chat() {
             currentUser?._id?.toString();
 
           return (
-            <div key={msg._id} className={isMe ? "text-right" : ""}>
+            <div
+              key={msg._id}
+              className={`${isMe ? "text-right" : ""} relative`}
+              onMouseEnter={() => setShowDelete(msg._id)}
+              onMouseLeave={() => setShowDelete(null)}
+            >
+              {/* MESSAGE BOX */}
               <div
-                className={`inline-block p-2 rounded ${
+                className={`inline-block p-2 pr-6 rounded relative ${
                   isMe ? "bg-blue-600" : "bg-gray-700"
                 }`}
               >
                 {msg.text}
+
+                {/* ✅ STATUS INSIDE */}
+                {isMe && (
+                  <span className="absolute bottom-1 right-1 text-xs">
+                    {msg.status === "sent" && "✔"}
+                    {msg.status === "delivered" && "✔✔"}
+                    {msg.status === "seen" && (
+                      <span className="text-blue-400">✔✔</span>
+                    )}
+                  </span>
+                )}
               </div>
 
-              {isMe && (
-                <div className="text-xs text-gray-400">
-                  {msg.status === "sent" && "✔"}
-                  {msg.status === "delivered" && "✔✔"}
-                  {msg.status === "seen" && "✔✔👀"}
-                </div>
+              {/* 🔥 DELETE BUTTON */}
+              {isMe && showDelete === msg._id && (
+                <button
+                  onClick={() => handleDeleteUI(msg._id)}
+                  className="text-red-400 text-xs ml-2"
+                >
+                  delete
+                </button>
               )}
             </div>
           );
