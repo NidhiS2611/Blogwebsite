@@ -156,6 +156,7 @@ export default function Home() {
                     image={blog.media}
                     author={blog.author?.name || "Unknown"}
                     authorProfile={blog.author?.profilepicture}
+                    authorId={blog.author?._id}
                     date={blog.date}
                     readTime={blog.readTime || "5 min"}
                     views={blog.views?.length || 0}   // ✅ PASS VIEWS COUNT
