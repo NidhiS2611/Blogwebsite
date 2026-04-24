@@ -13,7 +13,6 @@ export default function Chat() {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
   const [onlineUsers, setOnlineUsers] = useState([]);
-
   const [showDelete, setShowDelete] = useState(null);
 
   // ================= SOCKET ================= //
@@ -71,10 +70,7 @@ export default function Chat() {
     const fetchMessages = async () => {
       try {
         const res = await api.get(`/conversation/get/${userId}`);
-        const validMessages = (res.data || []).filter(
-          (m) => m !== null
-        );
-        setMessages(validMessages);
+        setMessages((res.data || []).filter(Boolean));
       } catch (err) {
         console.log("Fetch error", err);
       }
@@ -110,10 +106,8 @@ export default function Chat() {
         )
       );
     } catch (err) {
-      console.log("Send error", err);
-      setMessages((prev) =>
-        prev.filter((m) => m._id !== tempId)
-      );
+      console.log(err);
+      setMessages((prev) => prev.filter((m) => m._id !== tempId));
     }
   };
 
@@ -143,11 +137,11 @@ export default function Chat() {
           return (
             <div
               key={msg._id}
-              className={`${isMe ? "text-right" : ""} relative`}
+              className={`${isMe ? "text-right" : "text-left"} relative`}
               onMouseEnter={() => setShowDelete(msg._id)}
               onMouseLeave={() => setShowDelete(null)}
             >
-              {/* MESSAGE BOX */}
+              {/* MESSAGE */}
               <div
                 className={`inline-block p-2 pr-6 rounded relative ${
                   isMe ? "bg-blue-600" : "bg-gray-700"
@@ -155,7 +149,7 @@ export default function Chat() {
               >
                 {msg.text}
 
-                {/* ✅ STATUS INSIDE */}
+                {/* STATUS */}
                 {isMe && (
                   <span className="absolute bottom-1 right-1 text-xs">
                     {msg.status === "sent" && "✔"}
@@ -167,13 +161,13 @@ export default function Chat() {
                 )}
               </div>
 
-              {/* 🔥 DELETE BUTTON */}
-              {isMe && showDelete === msg._id && (
+              {/* 🔥 DELETE BUTTON (NO SHIFT) */}
+              {showDelete === msg._id && (
                 <button
                   onClick={() => handleDeleteUI(msg._id)}
-                  className="text-red-400 text-xs ml-2"
+                  className="absolute -top-2 right-0 text-red-400 text-xs bg-black px-1 rounded"
                 >
-                  delete
+                  ✕
                 </button>
               )}
             </div>
