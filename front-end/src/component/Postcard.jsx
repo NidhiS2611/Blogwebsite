@@ -106,7 +106,7 @@ function PostCard({
                 alt="author"
                 onClick={goToProfile}
               />
-              <span className="text-[11px] font-medium text-gray-300 truncate max-w-[100px]  ">
+              <span  onClick={goToProfile} className="text-[11px] font-medium text-gray-300 truncate max-w-[100px]  ">
                 {author || "Unknown"}
               </span>
               <span className="text-[10px] text-gray-500">• {date}</span>
