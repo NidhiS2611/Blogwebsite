@@ -146,10 +146,13 @@ export default function Chat() {
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
+      
+      {/* HEADER */}
       <div className="p-3 border-b border-gray-800">
         <h2>{isOnline ? "🟢 Online" : "⚫ Offline"}</h2>
       </div>
 
+      {/* CHAT */}
       <div className="flex-1 p-3 space-y-2 overflow-y-auto">
         {messages.map((msg) => {
           if (!msg) return null;
@@ -158,65 +161,72 @@ export default function Chat() {
             msg.sender?.toString() ===
             currentUser?._id?.toString();
 
-          // 🔥 hide if deleted for me
+          // hide if deleted for me
           const isDeletedForMe = msg.deletedFor?.includes(currentUser._id);
           if (isDeletedForMe) return null;
 
           return (
             <div
               key={msg._id}
-              className={`${isMe ? "text-right" : "text-left"} relative`}
+              className={`${isMe ? "text-right" : "text-left"} mb-2`}
             >
-              {/* MESSAGE */}
-              <div
-                className={`inline-block p-2 pr-6 rounded relative ${
-                  isMe ? "bg-blue-600" : "bg-gray-700"
-                }`}
-              >
-                {/* TEXT */}
-                {msg.isDeletedForEveryone
-                  ? "This message was deleted"
-                  : msg.text}
+              <div className="inline-block relative">
 
-                {/* STATUS */}
-                {isMe && (
-                  <span className="absolute bottom-1 right-1 text-xs">
-                    {msg.status === "sent" && "✔"}
-                    {msg.status === "delivered" && "✔✔"}
-                    {msg.status === "seen" && (
-                      <span className="text-blue-400">✔✔</span>
+                {/* MESSAGE BOX */}
+                <div
+                  className={`p-2 pr-8 rounded relative ${
+                    isMe ? "bg-blue-600" : "bg-gray-700"
+                  }`}
+                >
+                  {/* TEXT */}
+                  {msg.isDeletedForEveryone
+                    ? "This message was deleted"
+                    : msg.text}
+
+                  {/* 🔥 3 DOT INSIDE */}
+                  <button
+                    onClick={() =>
+                      setOpenMenuId(
+                        openMenuId === msg._id ? null : msg._id
+                      )
+                    }
+                    className="absolute top-1 right-1 text-gray-300 text-xs"
+                  >
+                    ⋮
+                  </button>
+                </div>
+
+                {/* 🔥 MENU */}
+                {openMenuId === msg._id && (
+                  <div className="absolute right-0 mt-1 bg-gray-800 text-white text-xs rounded shadow p-2 z-10">
+                    <div
+                      onClick={() => handleDeleteForMe(msg._id)}
+                      className="cursor-pointer hover:text-red-400"
+                    >
+                      Delete for me
+                    </div>
+
+                    {isMe && (
+                      <div
+                        onClick={() =>
+                          handleDeleteForEveryone(msg._id)
+                        }
+                        className="cursor-pointer hover:text-red-400 mt-1"
+                      >
+                        Delete for everyone
+                      </div>
                     )}
-                  </span>
+                  </div>
                 )}
               </div>
 
-              {/* 🔥 3 DOT BUTTON */}
-              <button
-                onClick={() =>
-                  setOpenMenuId(openMenuId === msg._id ? null : msg._id)
-                }
-                className="absolute top-0 right-0 text-gray-400 text-sm px-1"
-              >
-                ⋮
-              </button>
-
-              {/* 🔥 MENU */}
-              {openMenuId === msg._id && (
-                <div className="absolute right-0 mt-5 bg-gray-800 text-white text-xs rounded shadow p-2 z-10">
-                  <div
-                    onClick={() => handleDeleteForMe(msg._id)}
-                    className="cursor-pointer hover:text-red-400"
-                  >
-                    Delete for me
-                  </div>
-
-                  {isMe && (
-                    <div
-                      onClick={() => handleDeleteForEveryone(msg._id)}
-                      className="cursor-pointer hover:text-red-400 mt-1"
-                    >
-                      Delete for everyone
-                    </div>
+              {/* 🔥 STATUS OUTSIDE */}
+              {isMe && (
+                <div className="text-xs text-gray-400 mt-1 mr-1">
+                  {msg.status === "sent" && "✔"}
+                  {msg.status === "delivered" && "✔✔"}
+                  {msg.status === "seen" && (
+                    <span className="text-blue-400">✔✔</span>
                   )}
                 </div>
               )}
@@ -225,6 +235,7 @@ export default function Chat() {
         })}
       </div>
 
+      {/* INPUT */}
       <div className="flex p-2 border-t border-gray-800">
         <input
           value={text}
