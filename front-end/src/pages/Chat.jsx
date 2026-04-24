@@ -70,8 +70,8 @@ export default function Chat() {
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const res = await api.get(`/conversation/${userId}`);
-        const validMessages = (res.data.messages || []).filter(
+        const res = await api.get(`/conversation/get/${userId}`);
+        const validMessages = (res.data || []).filter(
           (m) => m !== null
         );
         setMessages(validMessages);

@@ -54,5 +54,30 @@ const sendMessage = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+const getMessages = async (req, res) => {
+  try {
+    const senderId = req.user.id
+    const receiverId = req.params.id
 
-module.exports = { sendMessage };
+    // 1. Conversation find karo
+    const conversation = await Conversation.findOne({
+      members: { $all: [senderId, receiverId] }
+    })
+
+    if (!conversation) {
+      return res.status(200).json([]) // koi chat nahi hai
+    }
+
+    // 2. Messages nikaalo
+    const messages = await Message.find({
+      conversationId: conversation._id
+    }).sort({ createdAt: 1 }) // old → new
+
+    res.status(200).json(messages)
+
+  } catch (err) {
+    console.log(err)
+    res.status(500).json({ error: "Internal Server Error" })
+  }
+}
+module.exports = { sendMessage, getMessages };
