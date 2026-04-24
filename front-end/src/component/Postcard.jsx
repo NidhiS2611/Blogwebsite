@@ -12,6 +12,7 @@ function PostCard({
   image,
   author,
   authorProfile,
+  authorId,
   date,
   views,
 }) {
@@ -58,7 +59,7 @@ function PostCard({
   };
   const goToProfile = (e) => {
   e.stopPropagation(); // 🔥 card click ko rokega
-  navigate(`/profile/${post.authorData?._id}`)// ya authorId agar hai
+  navigate(`/profile/${authorId}`)// ya authorId agar hai
 };
 
   return (
@@ -90,7 +91,7 @@ function PostCard({
               src={image}
               alt="blog"
               className="w-24 h-24 md:w-full md:h-44 object-cover rounded-lg border border-neutral-800 group-hover:opacity-80 transition"
-              onClick={goToProfile}
+              
             />
           </div>
         )}
@@ -103,8 +104,9 @@ function PostCard({
                 src={authorProfile || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
                 className="w-6 h-6 rounded-full border border-neutral-700"
                 alt="author"
+                onClick={goToProfile}
               />
-              <span className="text-[11px] font-medium text-gray-300 truncate max-w-[100px]">
+              <span className="text-[11px] font-medium text-gray-300 truncate max-w-[100px]  ">
                 {author || "Unknown"}
               </span>
               <span className="text-[10px] text-gray-500">• {date}</span>
