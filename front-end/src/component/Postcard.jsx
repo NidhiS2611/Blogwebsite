@@ -56,6 +56,10 @@ function PostCard({
       `https://wa.me/?text=${encodeURIComponent(title + "\n" + url)}`
     );
   };
+  const goToProfile = (e) => {
+  e.stopPropagation(); // 🔥 card click ko rokega
+  navigate(`/profile/${post.authorData?._id}`)// ya authorId agar hai
+};
 
   return (
     <div
@@ -81,11 +85,12 @@ function PostCard({
       <div className="flex gap-3 md:flex-col">
         {/* IMAGE */}
         {image && (
-          <div className="shrink-0 md:w-full">
+      <div className="shrink-0 md:w-full  }">
             <img
               src={image}
               alt="blog"
               className="w-24 h-24 md:w-full md:h-44 object-cover rounded-lg border border-neutral-800 group-hover:opacity-80 transition"
+              onClick={goToProfile}
             />
           </div>
         )}
