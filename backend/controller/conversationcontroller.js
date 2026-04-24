@@ -18,7 +18,7 @@ const sendMessage = async (req, res) => {
     }
 
     // 2. Message save (Status default "sent" rahega)
-    const message = await Message.create({
+    let message = await Message.create({
       conversationId: conversation._id,
       sender: senderId,
       receiver: receiverId,
