@@ -154,7 +154,7 @@ export default function Home() {
                     excerpt={blog.excerpt}
                     category={blog.category}
                     image={blog.media}
-                    authorId={blog.author?._id}
+                    authorId={blog.author?.id}
                     author={blog.author?.name || "Unknown"}
                     authorProfile={blog.author?.profilepicture}
                     
