@@ -226,7 +226,7 @@ export default function Chat() {
                   {msg.status === "sent" && "✔"}
                   {msg.status === "delivered" && "✔✔"}
                   {msg.status === "seen" && (
-                    <span className="text-blue-400">✔✔</span>
+                    <span className="text-blue-700">✔✔</span>
                   )}
                 </div>
               )}
