@@ -154,9 +154,10 @@ export default function Home() {
                     excerpt={blog.excerpt}
                     category={blog.category}
                     image={blog.media}
+                    authorId={blog.author?._id}
                     author={blog.author?.name || "Unknown"}
                     authorProfile={blog.author?.profilepicture}
-                    authorId={blog.author?.id}
+                    
                     date={blog.date}
                     readTime={blog.readTime || "5 min"}
                     views={blog.views?.length || 0}   // ✅ PASS VIEWS COUNT
