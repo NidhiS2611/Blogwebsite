@@ -238,7 +238,7 @@ const handleFollow = async () => {
   className="flex items-center gap-2 cursor-pointer"
 >
   <img
-    src={post.authorData?.profilePic || "/default.png"}
+    src={post.authorData?.profilepicture || "/default.png"}
     alt="author"
     className="w-8 h-8 rounded-full object-cover"
   />
