@@ -80,4 +80,43 @@ const getMessages = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" })
   }
 }
-module.exports = { sendMessage, getMessages };
+
+const deleteForEveryone = async (req, res) => {
+  try {
+    const messageId = req.params.id;
+
+    const message = await Message.findByIdAndUpdate(
+      messageId,
+      {
+        isDeletedForEveryone: true,
+        text: "This message was deleted",
+      },
+      { new: true }
+    );
+
+    res.status(200).json(message);
+  } catch (err) {
+    res.status(500).json({ error: "Error" });
+  }
+};
+
+
+const deleteForMe = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const messageId = req.params.id;
+
+    const message = await Message.findByIdAndUpdate(
+      messageId,
+      {
+        $addToSet: { deletedFor: userId }, // duplicate nahi hoga
+      },
+      { new: true }
+    );
+
+    res.status(200).json(message);
+  } catch (err) {
+    res.status(500).json({ error: "Error" });
+  }
+};
+module.exports = { sendMessage, getMessages,deleteForEveryone,deleteForMe };

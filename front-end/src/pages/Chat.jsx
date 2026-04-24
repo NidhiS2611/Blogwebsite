@@ -13,7 +13,9 @@ export default function Chat() {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
   const [onlineUsers, setOnlineUsers] = useState([]);
-  const [showDelete, setShowDelete] = useState(null);
+
+  // 🔥 menu state
+  const [openMenuId, setOpenMenuId] = useState(null);
 
   // ================= SOCKET ================= //
   useEffect(() => {
@@ -111,9 +113,31 @@ export default function Chat() {
     }
   };
 
-  // ================= UI DELETE ================= //
-  const handleDeleteUI = (id) => {
-    setMessages((prev) => prev.filter((m) => m._id !== id));
+  // ================= DELETE ================= //
+  const handleDeleteForMe = async (id) => {
+    try {
+      const res = await api.put(`/conversation/delete-for-me/${id}`);
+
+      setMessages((prev) =>
+        prev.map((m) => (m._id === id ? res.data : m))
+      );
+      setOpenMenuId(null);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const handleDeleteForEveryone = async (id) => {
+    try {
+      const res = await api.put(`/conversation/delete-for-everyone/${id}`);
+
+      setMessages((prev) =>
+        prev.map((m) => (m._id === id ? res.data : m))
+      );
+      setOpenMenuId(null);
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   const isOnline = onlineUsers.some(
@@ -134,12 +158,14 @@ export default function Chat() {
             msg.sender?.toString() ===
             currentUser?._id?.toString();
 
+          // 🔥 hide if deleted for me
+          const isDeletedForMe = msg.deletedFor?.includes(currentUser._id);
+          if (isDeletedForMe) return null;
+
           return (
             <div
               key={msg._id}
               className={`${isMe ? "text-right" : "text-left"} relative`}
-              onMouseEnter={() => setShowDelete(msg._id)}
-              onMouseLeave={() => setShowDelete(null)}
             >
               {/* MESSAGE */}
               <div
@@ -147,7 +173,10 @@ export default function Chat() {
                   isMe ? "bg-blue-600" : "bg-gray-700"
                 }`}
               >
-                {msg.text}
+                {/* TEXT */}
+                {msg.isDeletedForEveryone
+                  ? "This message was deleted"
+                  : msg.text}
 
                 {/* STATUS */}
                 {isMe && (
@@ -161,14 +190,35 @@ export default function Chat() {
                 )}
               </div>
 
-              {/* 🔥 DELETE BUTTON (NO SHIFT) */}
-              {showDelete === msg._id && (
-                <button
-                  onClick={() => handleDeleteUI(msg._id)}
-                  className="absolute -top-2 right-0 text-red-400 text-xs bg-black px-1 rounded"
-                >
-                  ✕
-                </button>
+              {/* 🔥 3 DOT BUTTON */}
+              <button
+                onClick={() =>
+                  setOpenMenuId(openMenuId === msg._id ? null : msg._id)
+                }
+                className="absolute top-0 right-0 text-gray-400 text-sm px-1"
+              >
+                ⋮
+              </button>
+
+              {/* 🔥 MENU */}
+              {openMenuId === msg._id && (
+                <div className="absolute right-0 mt-5 bg-gray-800 text-white text-xs rounded shadow p-2 z-10">
+                  <div
+                    onClick={() => handleDeleteForMe(msg._id)}
+                    className="cursor-pointer hover:text-red-400"
+                  >
+                    Delete for me
+                  </div>
+
+                  {isMe && (
+                    <div
+                      onClick={() => handleDeleteForEveryone(msg._id)}
+                      className="cursor-pointer hover:text-red-400 mt-1"
+                    >
+                      Delete for everyone
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           );
