@@ -11,7 +11,7 @@ const comment = async (req, res) => {
     const blogid = req.params.id;
     const userid = req.user.id;
 
-    const user = await usermodel.findOne({ email: req.user.role});
+    const user = await usermodel.findOne({ _id: userid });
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
