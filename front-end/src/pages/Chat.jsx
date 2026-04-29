@@ -159,10 +159,28 @@ export default function Chat() {
     (u) => u?.userId?.toString() === userId?.toString()
   );
 
-  const formatTime = (time) => {
-    if (!time) return "";
-    return new Date(time).toLocaleString();
-  };
+ const formatLastSeen = (time) => {
+  if (!time) return "";
+
+  const date = new Date(time);
+  const now = new Date();
+
+  const isToday = date.toDateString() === now.toDateString();
+
+  const yesterday = new Date();
+  yesterday.setDate(now.getDate() - 1);
+  const isYesterday = date.toDateString() === yesterday.toDateString();
+
+  const timeStr = date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  if (isToday) return `today at ${timeStr}`;
+  if (isYesterday) return `yesterday at ${timeStr}`;
+
+  return `${date.toLocaleDateString()} at ${timeStr}`;
+};
 
   return (
     <div className="bg-black text-white flex flex-col h-screen">
@@ -172,7 +190,7 @@ export default function Chat() {
         <h2 className="text-sm">
           {isOnline
             ? "🟢 Online"
-            : `⚫ Last seen ${formatTime(lastSeen)}`}
+            : `⚫ Last seen ${formatLastSeen(lastSeen)}`}
         </h2>
       </div>
 
