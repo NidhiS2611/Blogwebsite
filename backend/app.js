@@ -172,10 +172,16 @@ socket.on("seen_message", async ({ messageId, senderId }) => {
 
     if (user) {
       // 🔥 DB → OFFLINE
+      const time = new Date();
       await User.findByIdAndUpdate(user.userId, {
         isOnline: false,
-        lastSeen: new Date(),
+        lastSeen: time,
       });
+
+        io.emit("last_seen", {
+      userId: user.userId,
+      lastSeen: time,
+    });
 
       console.log("❌ user offline:", user.userId);
     }
@@ -185,6 +191,20 @@ socket.on("seen_message", async ({ messageId, senderId }) => {
     // 🔥 UPDATE ONLINE USERS
     io.emit("getUsers", users);
   });
+
+
+    socket.on("get_last_seen", async (userId) => {
+  try {
+    const user = await User.findById(userId);
+
+    socket.emit("last_seen", {
+      userId,
+      lastSeen: user?.lastSeen || null,
+    });
+  } catch (err) {
+    console.log("last seen error", err);
+  }
+});
 });
 
 // ================= START SERVER ================= //

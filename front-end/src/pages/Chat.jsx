@@ -95,7 +95,14 @@ export default function Chat() {
     };
 
     if (userId) fetchMessages();
+
   }, [userId]);
+
+useEffect(() => {
+  if (userId) {
+    socket.emit("get_last_seen", userId);
+  }
+}, [userId]);
 
   // ================= SEND ================= //
   const sendMessage = async () => {
