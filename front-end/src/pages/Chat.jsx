@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { Send } from "lucide-react";
 import { useAuth } from "../context/Authcontext";
@@ -13,9 +13,12 @@ export default function Chat() {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
   const [onlineUsers, setOnlineUsers] = useState([]);
+  const [lastSeen, setLastSeen] = useState(null);
 
-  // 🔥 menu state
   const [openMenuId, setOpenMenuId] = useState(null);
+
+  // 🔥 scroll ref
+  const bottomRef = useRef(null);
 
   // ================= SOCKET ================= //
   useEffect(() => {
@@ -37,16 +40,29 @@ export default function Chat() {
       );
     };
 
+    const handleLastSeen = (data) => {
+      if (data.userId === userId) {
+        setLastSeen(data.lastSeen);
+      }
+    };
+
     socket.on("getUsers", handleUsers);
     socket.on("receive_message", handleReceive);
     socket.on("message_status", handleStatus);
+    socket.on("last_seen", handleLastSeen);
 
     return () => {
       socket.off("getUsers", handleUsers);
       socket.off("receive_message", handleReceive);
       socket.off("message_status", handleStatus);
+      socket.off("last_seen", handleLastSeen);
     };
   }, [currentUser, userId]);
+
+  // ================= AUTO SCROLL ================= //
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   // ================= SEEN ================= //
   useEffect(() => {
@@ -117,7 +133,6 @@ export default function Chat() {
   const handleDeleteForMe = async (id) => {
     try {
       const res = await api.put(`/conversation/delete-for-me/${id}`);
-
       setMessages((prev) =>
         prev.map((m) => (m._id === id ? res.data : m))
       );
@@ -130,7 +145,6 @@ export default function Chat() {
   const handleDeleteForEveryone = async (id) => {
     try {
       const res = await api.put(`/conversation/delete-for-everyone/${id}`);
-
       setMessages((prev) =>
         prev.map((m) => (m._id === id ? res.data : m))
       );
@@ -140,16 +154,26 @@ export default function Chat() {
     }
   };
 
+  // ================= ONLINE ================= //
   const isOnline = onlineUsers.some(
     (u) => u?.userId?.toString() === userId?.toString()
   );
 
+  const formatTime = (time) => {
+    if (!time) return "";
+    return new Date(time).toLocaleString();
+  };
+
   return (
-    <div className=" bg-black text-white flex flex-col">
-      
+    <div className="bg-black text-white flex flex-col h-screen">
+
       {/* HEADER */}
       <div className="p-3 border-b border-gray-800">
-        <h2>{isOnline ? "🟢 Online" : "⚫ Offline"}</h2>
+        <h2 className="text-sm">
+          {isOnline
+            ? "🟢 Online"
+            : `⚫ Last seen ${formatTime(lastSeen)}`}
+        </h2>
       </div>
 
       {/* CHAT */}
@@ -158,10 +182,8 @@ export default function Chat() {
           if (!msg) return null;
 
           const isMe =
-            msg.sender?.toString() ===
-            currentUser?._id?.toString();
+            msg.sender?.toString() === currentUser?._id?.toString();
 
-          // hide if deleted for me
           const isDeletedForMe = msg.deletedFor?.includes(currentUser._id);
           if (isDeletedForMe) return null;
 
@@ -172,18 +194,15 @@ export default function Chat() {
             >
               <div className="inline-block relative">
 
-                {/* MESSAGE BOX */}
                 <div
                   className={`p-2 pr-8 rounded relative ${
                     isMe ? "bg-blue-600" : "bg-gray-700"
                   }`}
                 >
-                  {/* TEXT */}
                   {msg.isDeletedForEveryone
                     ? "This message was deleted"
                     : msg.text}
 
-                  {/* 🔥 3 DOT INSIDE */}
                   <button
                     onClick={() =>
                       setOpenMenuId(
@@ -196,7 +215,6 @@ export default function Chat() {
                   </button>
                 </div>
 
-                {/* 🔥 MENU */}
                 {openMenuId === msg._id && (
                   <div className="absolute right-0 mt-1 bg-gray-800 text-white text-xs rounded shadow p-2 z-10">
                     <div
@@ -220,7 +238,6 @@ export default function Chat() {
                 )}
               </div>
 
-              {/* 🔥 STATUS OUTSIDE */}
               {isMe && (
                 <div className="text-xs text-gray-400 mt-1 mr-1">
                   {msg.status === "sent" && "✔"}
@@ -233,10 +250,13 @@ export default function Chat() {
             </div>
           );
         })}
+
+        {/* 🔥 scroll anchor */}
+        <div ref={bottomRef}></div>
       </div>
 
-      {/* INPUT */}
-      <div className="flex p-2 border-t border-gray-800">
+      {/* INPUT FIXED */}
+      <div className="flex p-2 border-t border-gray-800 sticky bottom-0 bg-black">
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
