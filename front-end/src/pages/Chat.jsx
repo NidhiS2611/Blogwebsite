@@ -145,7 +145,7 @@ export default function Chat() {
   );
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col">
+    <div className=" bg-black text-white flex flex-col">
       
       {/* HEADER */}
       <div className="p-3 border-b border-gray-800">
