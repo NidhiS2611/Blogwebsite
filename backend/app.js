@@ -196,6 +196,7 @@ socket.on("seen_message", async ({ messageId, senderId }) => {
     socket.on("get_last_seen", async (userId) => {
   try {
     const user = await User.findById(userId);
+    console.log("last seen request for", userId, "->", user?.lastSeen);
 
     socket.emit("last_seen", {
       userId,
