@@ -102,7 +102,7 @@ io.on("connection", async (socket) => {
     // 🔥 DB → ONLINE
     await User.findByIdAndUpdate(userId, {
       isOnline: true,
-      lastSeen: null,
+      LastSeen: null,
     });
 
     console.log("🔥 user online:", userId);
@@ -175,12 +175,12 @@ socket.on("seen_message", async ({ messageId, senderId }) => {
       const time = new Date();
       await User.findByIdAndUpdate(user.userId, {
         isOnline: false,
-        lastSeen: time,
+        LastSeen: time,
       });
 
         io.emit("last_seen", {
       userId: user.userId,
-      lastSeen: time,
+      LastSeen: time,
     });
 
       console.log("❌ user offline:", user.userId);
@@ -196,11 +196,11 @@ socket.on("seen_message", async ({ messageId, senderId }) => {
     socket.on("get_last_seen", async (userId) => {
   try {
     const user = await User.findById(userId);
-    console.log("last seen request for", userId, "->", user?.lastSeen);
+    console.log("last seen request for", userId, "->", user?.LastSeen);
 
     socket.emit("last_seen", {
       userId,
-      lastSeen: user?.lastSeen || null,
+      lastSeen: user?.LastSeen || null,
     });
   } catch (err) {
     console.log("last seen error", err);
