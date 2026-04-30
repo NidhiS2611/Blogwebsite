@@ -21,6 +21,7 @@ const Profile = lazy(() => import("./pages/Profile"));
 const Setting = lazy(() => import("./pages/Setting.jsx"));
 const Bookmarks = lazy(() => import("./pages/Bookmarks.jsx"));
 const DangerZone = lazy(() => import("./pages/DangerZone.jsx"));
+const Getstats = lazy(() => import("./pages/Getstats.jsx"));
 const Notificationsetting = lazy(() =>
   import("./pages/Notificationsetting.jsx")
 );
@@ -126,6 +127,7 @@ function App() {
             />
             <Route path="settings/danger-zone" element={<DangerZone />} />
             <Route path="bookmarks" element={<Bookmarks />} />
+            <Route path="getstats" element={<Getstats />} />
           </Route>
         </Routes>
       </Suspense>

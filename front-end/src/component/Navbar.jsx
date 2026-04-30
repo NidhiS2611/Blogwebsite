@@ -154,7 +154,7 @@ export default function Navbar() {
             <SidebarLink to="/bookmarks" icon={<BookmarkCheck size={18} />} label="Saved" onClick={closeSidebar} />
 
             <SidebarLink to="/createblog" icon={<PenLine size={18} />} label="Write" highlight onClick={closeSidebar} />
-            <SidebarLink to="/getstats" icon={<BarChart size={18} />} label="Profile" onClick={closeSidebar} />
+            <SidebarLink to="/getstats" icon={<BarChart size={18} />} label="Analytics" onClick={closeSidebar} />
           </nav>
         </div>
 
