@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from 'recharts';
+import api from "../services/Axiosinstance"
 
 const Getstats = () => {
     const [data, setData] = useState([]);
@@ -10,7 +11,7 @@ const Getstats = () => {
         const getData = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const res = await axios.get('http://localhost:3000/blog/getdstats', {
+                const res = await api.get('/blog/getdstats', {
                     withCredentials:true,
                 });
                 setData(res.data);
