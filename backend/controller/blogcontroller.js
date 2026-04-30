@@ -522,7 +522,7 @@ const getSavedBlogs = async (req, res) => {
 const getAuthorComparisonStats = async (req, res) => {
     try {
         const stats = await blogmodel.aggregate([
-            { $match: { author: req.user.id } }, // Sirf current author ke blogs
+            { $match: { author: new mongoose.Types.ObjectId(req.user.id) } }, // Sirf current author ke blogs
             {
                 $project: {
                     title: 1, // Blog ka naam
