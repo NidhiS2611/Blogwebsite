@@ -11,9 +11,10 @@ const Getstats = () => {
         const getData = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const res = await api.get('/blog/getdstats', {
+                const res = await api.get('/blog/getstats', {
                     withCredentials:true,
                 });
+                console.log("res",res)
                 setData(res.data);
                 setLoading(false);
             } catch (err) {
