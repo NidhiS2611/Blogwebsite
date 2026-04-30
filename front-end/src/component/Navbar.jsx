@@ -10,7 +10,8 @@ import {
   User,
   Menu,
   X,
-  BookmarkCheck, // ✅ Naya icon import kiya
+  BookmarkCheck,
+  BarChart, // ✅ Naya icon import kiya
 } from "lucide-react";
 import { useAuth } from "../context/Authcontext";
 import api from "../services/Axiosinstance";
@@ -153,6 +154,7 @@ export default function Navbar() {
             <SidebarLink to="/bookmarks" icon={<BookmarkCheck size={18} />} label="Saved" onClick={closeSidebar} />
 
             <SidebarLink to="/createblog" icon={<PenLine size={18} />} label="Write" highlight onClick={closeSidebar} />
+            <SidebarLink to="/getstats" icon={<BarChart size={18} />} label="Profile" onClick={closeSidebar} />
           </nav>
         </div>
 

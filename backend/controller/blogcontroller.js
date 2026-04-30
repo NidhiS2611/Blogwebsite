@@ -518,5 +518,25 @@ const getSavedBlogs = async (req, res) => {
   }
 };
 
+// Controller logic
+const getAuthorComparisonStats = async (req, res) => {
+    try {
+        const stats = await blogmodel.aggregate([
+            { $match: { author: req.user.id } }, // Sirf current author ke blogs
+            {
+                $project: {
+                    title: 1, // Blog ka naam
+                    likesCount: { $size: "$likes" }, // Likes array ki length
+                    viewsCount: { $size: "$views" }  // Views array ki length
+                }
+            },
+            { $sort: { viewsCount: -1 } } // Sabse zyada views wala upar
+        ]);
+        res.json(stats);
+    } catch (err) {
+        res.status(500).json(err);
+    }
+};
 
-module.exports = { createblog, toggleLike, getSingleBlog, getFeedBlogs, updateBlog, generateBlogwithai, getallBlogs ,updateViewCount,deleteBlog, getTodayHighlight, getSavedBlogs};
+
+module.exports = { createblog, toggleLike, getSingleBlog, getFeedBlogs, updateBlog, generateBlogwithai, getallBlogs ,updateViewCount,deleteBlog, getTodayHighlight, getSavedBlogs, getAuthorComparisonStats};
