@@ -532,8 +532,11 @@ const getAuthorComparisonStats = async (req, res) => {
             },
             { $sort: { viewsCount: -1 } } // Sabse zyada views wala upar
         ]);
+        console.log("Author stats:", stats);
+
         res.json(stats);
     } catch (err) {
+        console.log("Author stats error:", err);
         res.status(500).json(err);
     }
 };
